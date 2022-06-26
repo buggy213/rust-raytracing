@@ -8,10 +8,17 @@ use rand::random;
 use types::vec3::{Vec3};
 use types::color::Color;
 use types::ray::Ray;
+use types::materials::Material::{Lambertian, Metal};
 
 use crate::camera::Camera;
 use crate::hittables::hittable_list::HittableList;
 use crate::hittables::sphere::Sphere;
+
+fn base_gradient(r: &Ray) -> Color {
+    let unit_direction: Vec3 = Vec3::normalized(r.direction);
+    let t = 0.5 * (unit_direction.y() + 1.0);
+    (1.0 - t) * Vec3(1.0, 1.0, 1.0) + t * Vec3(0.5, 0.7, 1.0)
+}
 
 fn ray_color(r: &Ray, world: &dyn Hittable, depth: i32) -> Color {
     
@@ -21,14 +28,18 @@ fn ray_color(r: &Ray, world: &dyn Hittable, depth: i32) -> Color {
 
     match world.hit(r, 0.001, f64::INFINITY) {
         Some(record) => {
-            let target = record.p + record.normal + Vec3::random_in_unit_sphere();
-            let child_ray = Ray { origin: record.p, direction: target - record.p };
-            0.5 * ray_color(&child_ray, world, depth - 1)
+            match record.material.scatter(&r, &record) {
+                Some((attenuation, scattered)) => {
+                    attenuation * ray_color(&scattered, world, depth - 1)
+                }
+                // Absorbed
+                None => {
+                    Vec3(0.0, 0.0, 0.0)
+                }
+            }
         },
         None => {
-            let unit_direction: Vec3 = Vec3::normalized(r.direction);
-            let t = 0.5 * (unit_direction.y() + 1.0);
-            (1.0 - t) * Vec3(1.0, 1.0, 1.0) + t * Vec3(0.5, 0.7, 1.0)
+            base_gradient(r)
         }
     }
 }
@@ -42,15 +53,31 @@ fn main() {
 
     let camera = Camera::default();
 
-    let near = Sphere {
+    let material_ground = Lambertian(Vec3(0.8, 0.8, 0.0));
+    let material_center = Lambertian(Vec3(0.7, 0.3, 0.3));
+    let material_left = Metal(Vec3(0.8, 0.8, 0.8));
+    let material_right = Metal(Vec3(0.8, 0.6, 0.2));
+    let center = Sphere {
         center: Vec3(0.0, 0.0, -1.0),
-        radius: 0.5
+        radius: 0.5,
+        material: material_center
     };
-    let far = Sphere {
+    let left = Sphere {
+        center: Vec3(-1.0, 0.0, -1.0),
+        radius: 0.5,
+        material: material_left
+    };
+    let right = Sphere {
+        center: Vec3(1.0, 0.0, -1.0),
+        radius: 0.5,
+        material: material_right
+    };
+    let ground = Sphere {
         center: Vec3(0.0, -100.5, -1.0),
-        radius: 100.0
+        radius: 100.0,
+        material: material_ground
     };
-    let world = from!(Box::new(near), Box::new(far)); 
+    let world = from!(Box::new(ground), Box::new(center), Box::new(left), Box::new(right)); 
 
     println!("P3");
     println!("{} {}", IMAGE_WIDTH, IMAGE_HEIGHT);

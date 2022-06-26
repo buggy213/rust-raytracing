@@ -1,4 +1,4 @@
-use std::ops::{self, MulAssign};
+use std::{ops::{self, MulAssign}, f64::EPSILON};
 
 use rand::random;
 
@@ -64,6 +64,30 @@ impl Vec3 {
                 break p;
             }
         }
+    }
+
+    pub fn random_unit_vector() -> Vec3 {
+        Vec3::normalized(Vec3::random_in_unit_sphere())
+    }
+
+    pub fn random_in_hemisphere(normal: Vec3) -> Vec3{
+        let in_unit_sphere = Vec3::random_in_unit_sphere();
+        if Vec3::dot(in_unit_sphere, normal) > 0.0 {
+            in_unit_sphere
+        }
+        else {
+            -in_unit_sphere
+        }
+    }
+
+    pub fn near_zero(&self) -> bool {
+        const EPSILON: f64 = 1e-8;
+        self.0.abs() < EPSILON && self.1.abs() < EPSILON && self.2.abs() < EPSILON
+    }
+
+    // reflect v across the plane defined by n
+    pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
+        v - 2.0 * Vec3::dot(v, n) * n
     }
 }
 

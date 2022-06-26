@@ -1,11 +1,13 @@
 use super::hittable::Hittable;
+use crate::types::materials::Material;
 use crate::types::ray::Ray;
 use crate::types::vec3::Point;
 use crate::types::vec3::Vec3;
 use super::hittable::HitRecord;
 pub struct Sphere {
     pub center: Point,
-    pub radius: f64
+    pub radius: f64,
+    pub material: Material
 }
 
 impl Hittable for Sphere {
@@ -29,7 +31,7 @@ impl Hittable for Sphere {
             }
         }
         let outward_normal = (ray.at(root) - self.center) / self.radius;
-        let record: HitRecord = HitRecord::construct(ray.at(root), outward_normal, root, ray);
+        let record: HitRecord = HitRecord::construct(ray.at(root), outward_normal, root, ray, &self.material);
         Some(record)
     }
 }

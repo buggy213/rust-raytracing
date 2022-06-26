@@ -9,8 +9,9 @@ impl Color {
         let g = color.y() / samples_per_pixel as f64;
         let b = color.z() / samples_per_pixel as f64;
 
-        println!("{} {} {}", (clamp(r, 0.0, 0.999) * 256.0) as i32, 
-                        (clamp(g, 0.0, 0.999) * 256.0) as i32, 
-                        (clamp(b, 0.0, 0.999) * 256.0) as i32);
+        // gamma 2
+        println!("{} {} {}", (clamp(r.sqrt(), 0.0, 0.999) * 256.0) as i32, 
+                        (clamp(g.sqrt(), 0.0, 0.999) * 256.0) as i32, 
+                        (clamp(b.sqrt(), 0.0, 0.999) * 256.0) as i32);
     }
 }

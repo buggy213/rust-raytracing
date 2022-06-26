@@ -15,16 +15,6 @@ macro_rules! from {
 
 impl HittableList {
     pub fn new() -> HittableList {
-        let a: Sphere = Sphere {
-            center: Vec3(0.0, 0.0, 0.0),
-            radius: 0.5
-        };
-        let b: Sphere = Sphere {
-            center: Vec3(0.0, 0.0, 0.0),
-            radius: 0.5
-        };
-        let a = from!(Box::new(a), Box::new(b));
-        print!("{}", a.objects.len());
         HittableList { objects: Vec::new() }
     }   
 }
