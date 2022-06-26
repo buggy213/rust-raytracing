@@ -1,13 +1,25 @@
 mod types;
 
-use types::vec3::Vec3;
+use types::vec3::{Vec3, Point};
 use types::color::Color;
 use types::ray::Ray;
 
-fn ray_color(r: Ray) -> Color {
+fn ray_color(r: &Ray) -> Color {
+    if hit_sphere(Vec3(0.0, 0.0, -1.0), 0.5, r) {
+        return Vec3(1.0, 0.0, 0.0);
+    }
     let unit_direction: Vec3 = Vec3::normalized(r.direction);
     let t = 0.5 * (unit_direction.y() + 1.0);
     (1.0 - t) * Vec3(1.0, 1.0, 1.0) + t * Vec3(0.5, 0.7, 1.0)
+}
+
+fn hit_sphere(center: Point, radius: f64, ray: &Ray) -> bool {
+    let oc: Vec3 = ray.origin - center;
+    let a = ray.direction.square_magnitude();
+    let b = 2.0 * Vec3::dot(oc, ray.direction);
+    let c = oc.square_magnitude() - radius * radius;
+    let discriminant = b * b - 4.0 * a * c;
+    discriminant > 0.0
 }
 
 fn main() {
@@ -35,7 +47,7 @@ fn main() {
             let u = j as f64 / (IMAGE_WIDTH - 1) as f64;
             let v = i as f64 / (IMAGE_HEIGHT - 1) as f64;
             let ray: Ray = Ray { origin: ORIGIN, direction: LOWER_LEFT + u * HORIZONTAL + v * VERTICAL - ORIGIN };
-            let color: Color = ray_color(ray);
+            let color: Color = ray_color(&ray);
             Color::write_color(color);
         }
     }
