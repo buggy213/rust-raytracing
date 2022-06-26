@@ -1,34 +1,25 @@
 mod types;
+mod hittables;
+mod utils;
 
-use types::vec3::{Vec3, Point};
+use hittables::hittable::Hittable;
+use types::vec3::{Vec3};
 use types::color::Color;
 use types::ray::Ray;
 
-fn ray_color(r: &Ray) -> Color {
-    match hit_sphere(Vec3(0.0, 0.0, -1.0), 0.5, r) {
-        Some(t) => {
-            let normal: Vec3 = Vec3::normalized(r.at(t) - Vec3(0.0, 0.0, -1.0));
-            0.5 * Vec3(normal.x() + 1.0, normal.y() + 1.0, normal.z() + 1.0)
+use crate::hittables::hittable_list::HittableList;
+use crate::hittables::sphere::Sphere;
+
+fn ray_color(r: &Ray, world: &dyn Hittable) -> Color {
+    match world.hit(r, 0.0, f64::INFINITY) {
+        Some(record) => {
+            0.5 * (record.normal + Vec3(1.0, 1.0, 1.0))
         },
         None => {
             let unit_direction: Vec3 = Vec3::normalized(r.direction);
             let t = 0.5 * (unit_direction.y() + 1.0);
             (1.0 - t) * Vec3(1.0, 1.0, 1.0) + t * Vec3(0.5, 0.7, 1.0)
         }
-    }
-}
-
-fn hit_sphere(center: Point, radius: f64, ray: &Ray) -> Option<f64> {
-    let oc: Vec3 = ray.origin - center;
-    let a = ray.direction.square_magnitude();
-    let b = 2.0 * Vec3::dot(oc, ray.direction);
-    let c = oc.square_magnitude() - radius * radius;
-    let discriminant = b * b - 4.0 * a * c;
-    if discriminant > 0.0 {
-        Some((-b - discriminant.sqrt()) / (2.0 * a))
-    }
-    else {
-        None
     }
 }
 
@@ -46,7 +37,16 @@ fn main() {
     const VERTICAL: Vec3 = Vec3(0.0, VIEWPORT_HEIGHT, 0.0);
     let LOWER_LEFT: Vec3 = ORIGIN - HORIZONTAL / 2.0 - VERTICAL / 2.0 - Vec3(0.0, 0.0, FOCAL_LENGTH);
 
-    
+    let near = Sphere {
+        center: Vec3(0.0, 0.0, -1.0),
+        radius: 0.5
+    };
+    let far = Sphere {
+        center: Vec3(0.0, -100.5, -1.0),
+        radius: 100.0
+    };
+    let world = from!(Box::new(near), Box::new(far)); 
+
     println!("P3");
     println!("{} {}", IMAGE_WIDTH, IMAGE_HEIGHT);
     println!("255");
@@ -57,7 +57,7 @@ fn main() {
             let u = i as f64 / (IMAGE_WIDTH - 1) as f64;
             let v = j as f64 / (IMAGE_HEIGHT - 1) as f64;
             let ray: Ray = Ray { origin: ORIGIN, direction: LOWER_LEFT + u * HORIZONTAL + v * VERTICAL - ORIGIN };
-            let color: Color = ray_color(&ray);
+            let color: Color = ray_color(&ray, &world);
             Color::write_color(color);
         }
     }
