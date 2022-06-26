@@ -56,16 +56,22 @@ fn main() {
     let material_ground = Lambertian(Vec3(0.8, 0.8, 0.0));
     let material_center = Lambertian(Vec3(0.1, 0.2, 0.5));
     let material_left = Dielectric(1.5);
+    let material_hollow = Dielectric(1.5);
     let material_right = Metal(Vec3(0.8, 0.6, 0.2), 0.0);
     let center = Sphere {
         center: Vec3(0.0, 0.0, -1.0),
         radius: 0.5,
         material: material_center
     };
-    let left = Sphere {
+    let left_hollow = Sphere {
         center: Vec3(-1.0, 0.0, -1.0),
         radius: 0.5,
         material: material_left
+    };
+    let left_inner = Sphere {
+        center: Vec3(-1.0, 0.0, -1.0),
+        radius: -0.4,
+        material: material_hollow
     };
     let right = Sphere {
         center: Vec3(1.0, 0.0, -1.0),
@@ -77,7 +83,7 @@ fn main() {
         radius: 100.0,
         material: material_ground
     };
-    let world = from!(Box::new(ground), Box::new(center), Box::new(left), Box::new(right)); 
+    let world = from!(Box::new(ground), Box::new(center), Box::new(left_hollow), Box::new(left_inner), Box::new(right)); 
 
     println!("P3");
     println!("{} {}", IMAGE_WIDTH, IMAGE_HEIGHT);

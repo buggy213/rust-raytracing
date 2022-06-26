@@ -1,3 +1,5 @@
+use rand::random;
+
 use crate::hittables::hittable::HitRecord;
 
 use super::{ray::Ray, color::Color, vec3::Vec3};
@@ -9,6 +11,13 @@ pub enum Material {
 }
 
 impl Material {
+
+    fn reflectance(cosine: f64, ior: f64) -> f64 {
+        let mut r0 = (1.0 - ior) / (1.0 + ior);
+        r0 = r0 * r0;
+        r0 + (1.0 - r0) * f64::powi(1.0 - cosine, 5)
+    }
+
     pub fn scatter(&self, ray_in: &Ray, record: &HitRecord) -> Option<(Color, Ray)> {
         match self {
             Material::Lambertian(albedo) => {
@@ -35,13 +44,13 @@ impl Material {
                 let cos_theta = f64::min(1.0, Vec3::dot(-unit_direction, record.normal));
                 let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
-                let can_refract = refraction_ratio * sin_theta <= 1.0;
+                let cannot_refract = refraction_ratio * sin_theta > 1.0;
                 
-                let direction = if can_refract {
-                    Vec3::refract(unit_direction, record.normal, refraction_ratio)
-                }
-                else {
+                let direction = if cannot_refract || Material::reflectance(cos_theta, refraction_ratio) > random() {
                     Vec3::reflect(unit_direction, record.normal)
+                }
+                else {                    
+                    Vec3::refract(unit_direction, record.normal, refraction_ratio)
                 };
                 let scattered = Ray { origin: record.p, direction: direction };
                 Some((Vec3(1.0, 1.0, 1.0), scattered))
