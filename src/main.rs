@@ -13,10 +13,17 @@ use crate::camera::Camera;
 use crate::hittables::hittable_list::HittableList;
 use crate::hittables::sphere::Sphere;
 
-fn ray_color(r: &Ray, world: &dyn Hittable) -> Color {
-    match world.hit(r, 0.0, f64::INFINITY) {
+fn ray_color(r: &Ray, world: &dyn Hittable, depth: i32) -> Color {
+    
+    if depth <= 0 {
+        return Vec3(0.0, 0.0, 0.0);
+    }
+
+    match world.hit(r, 0.001, f64::INFINITY) {
         Some(record) => {
-            0.5 * (record.normal + Vec3(1.0, 1.0, 1.0))
+            let target = record.p + record.normal + Vec3::random_in_unit_sphere();
+            let child_ray = Ray { origin: record.p, direction: target - record.p };
+            0.5 * ray_color(&child_ray, world, depth - 1)
         },
         None => {
             let unit_direction: Vec3 = Vec3::normalized(r.direction);
@@ -31,6 +38,7 @@ fn main() {
     const IMAGE_HEIGHT: i32 = 400;
     const IMAGE_WIDTH: i32 = (IMAGE_HEIGHT as f64 * ASPECT_RATIO) as i32;
     const SAMPLES_PER_PIXEL: i32 = 100;
+    const MAX_DEPTH: i32 = 50;
 
     let camera = Camera::default();
 
@@ -57,7 +65,7 @@ fn main() {
                 let u = (random::<f64>() + i as f64) / (IMAGE_WIDTH - 1) as f64;
                 let v = (random::<f64>() + j as f64) / (IMAGE_HEIGHT - 1) as f64;
                 let ray: Ray = camera.get_ray(u, v);
-                color += ray_color(&ray, &world);
+                color += ray_color(&ray, &world, MAX_DEPTH);
             }
             Color::write_color(color, SAMPLES_PER_PIXEL);
         }

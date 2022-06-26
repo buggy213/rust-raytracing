@@ -1,5 +1,9 @@
 use std::ops::{self, MulAssign};
 
+use rand::random;
+
+use crate::utils::random_range;
+
 #[derive(Clone, Copy, Default)]
 pub struct Vec3(pub f64, pub f64, pub f64);
 pub type Point = Vec3;
@@ -43,6 +47,23 @@ impl Vec3 {
 
     pub fn normalized(u: Vec3) -> Vec3 {
         u / u.length()
+    }
+
+    pub fn random_vec() -> Vec3 {
+        Vec3(random(), random(), random())
+    }
+
+    pub fn random_vec_bounded(min: f64, max: f64) -> Vec3 {
+        Vec3(random_range(min, max), random_range(min, max), random_range(min, max))
+    }
+
+    pub fn random_in_unit_sphere() -> Vec3 {
+        loop {
+            let p = Vec3::random_vec_bounded(-1.0, 1.0);
+            if p.length() < 1.0 {
+                break p;
+            }
+        }
     }
 }
 
