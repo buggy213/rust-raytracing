@@ -55,8 +55,8 @@ fn main() {
 
     let material_ground = Lambertian(Vec3(0.8, 0.8, 0.0));
     let material_center = Lambertian(Vec3(0.7, 0.3, 0.3));
-    let material_left = Metal(Vec3(0.8, 0.8, 0.8));
-    let material_right = Metal(Vec3(0.8, 0.6, 0.2));
+    let material_left = Metal(Vec3(0.8, 0.8, 0.8), 0.3);
+    let material_right = Metal(Vec3(0.8, 0.6, 0.2), 1.0);
     let center = Sphere {
         center: Vec3(0.0, 0.0, -1.0),
         radius: 0.5,

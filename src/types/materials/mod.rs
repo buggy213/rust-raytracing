@@ -4,7 +4,7 @@ use super::{ray::Ray, color::Color, vec3::Vec3};
 
 pub enum Material {
     Lambertian(Color),
-    Metal(Color)
+    Metal(Color, f64)
 }
 
 impl Material {
@@ -21,10 +21,10 @@ impl Material {
                 Some((*albedo, scattered))
             }
 
-            Material::Metal(albedo) => {
+            Material::Metal(albedo, fuzz) => {
                 let reflected = Vec3::reflect(Vec3::normalized(ray_in.direction), record.normal);
-                let scattered = Ray { origin: record.p, direction: reflected };
-                Some((*albedo, scattered))
+                let scattered = Ray { origin: record.p, direction: reflected + *fuzz * Vec3::random_in_unit_sphere() };
+                if Vec3::dot(scattered.direction, record.normal) > 0.0 { Some((*albedo, scattered)) } else { None }
             }
         }
     }
