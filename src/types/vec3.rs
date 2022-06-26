@@ -89,6 +89,14 @@ impl Vec3 {
     pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
         v - 2.0 * Vec3::dot(v, n) * n
     }
+
+    pub fn refract(uv: Vec3, n: Vec3, refractive_index_ratio: f64) -> Vec3 {
+        let cos_theta = f64::min(1.0, Vec3::dot(-uv, n));
+        let perpendicular = refractive_index_ratio * (uv + cos_theta * n);
+        let x = (1.0 - perpendicular.square_magnitude()).abs().sqrt();
+        let parallel = -x * n;
+        perpendicular + parallel
+    }
 }
 
 impl ops::AddAssign for Vec3 {
