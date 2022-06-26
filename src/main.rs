@@ -51,7 +51,7 @@ fn main() {
     const SAMPLES_PER_PIXEL: i32 = 100;
     const MAX_DEPTH: i32 = 50;
 
-    let camera = Camera::default();
+    let camera = Camera::custom(Vec3(-2.0, 2.0, 1.0), Vec3(0.0, 0.0, -1.0), Vec3(0.0, 1.0, 0.0), ASPECT_RATIO, 20.0);
 
     let material_ground = Lambertian(Vec3(0.8, 0.8, 0.0));
     let material_center = Lambertian(Vec3(0.1, 0.2, 0.5));
