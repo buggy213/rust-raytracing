@@ -31,8 +31,19 @@ impl Material {
             Material::Dielectric(index_of_refraction) => {
                 let refraction_ratio = if record.front_face { 1.0 / index_of_refraction } else { *index_of_refraction };
                 let unit_direction = Vec3::normalized(ray_in.direction);
-                let refracted = Vec3::refract(unit_direction, record.normal, refraction_ratio);
-                let scattered = Ray { origin: record.p, direction: refracted };
+                
+                let cos_theta = f64::min(1.0, Vec3::dot(-unit_direction, record.normal));
+                let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+
+                let can_refract = refraction_ratio * sin_theta <= 1.0;
+                
+                let direction = if can_refract {
+                    Vec3::refract(unit_direction, record.normal, refraction_ratio)
+                }
+                else {
+                    Vec3::reflect(unit_direction, record.normal)
+                };
+                let scattered = Ray { origin: record.p, direction: direction };
                 Some((Vec3(1.0, 1.0, 1.0), scattered))
             }
         }

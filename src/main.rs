@@ -54,9 +54,9 @@ fn main() {
     let camera = Camera::default();
 
     let material_ground = Lambertian(Vec3(0.8, 0.8, 0.0));
-    let material_center = Dielectric(1.5);
+    let material_center = Lambertian(Vec3(0.1, 0.2, 0.5));
     let material_left = Dielectric(1.5);
-    let material_right = Metal(Vec3(0.8, 0.6, 0.2), 1.0);
+    let material_right = Metal(Vec3(0.8, 0.6, 0.2), 0.0);
     let center = Sphere {
         center: Vec3(0.0, 0.0, -1.0),
         radius: 0.5,
