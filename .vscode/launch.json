@@ -19,7 +19,7 @@
                     "kind": "bin"
                 }
             },
-            "args": ["-s", "16", "-o", "output.ppm"],
+            "args": ["-s", "1", "-o", "output.ppm"],
             "cwd": "${workspaceFolder}"
         },
         {
