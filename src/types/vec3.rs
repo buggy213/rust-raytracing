@@ -1,10 +1,10 @@
-use std::{ops::{self, MulAssign}, f64::EPSILON};
+use std::{ops::{self, MulAssign}};
 
 use rand::random;
 
 use crate::utils::random_range;
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Default, Debug)]
 pub struct Vec3(pub f64, pub f64, pub f64);
 pub type Point = Vec3;
 
@@ -96,6 +96,15 @@ impl Vec3 {
         let x = (1.0 - perpendicular.square_magnitude()).abs().sqrt();
         let parallel = -x * n;
         perpendicular + parallel
+    }
+
+    pub fn random_in_unit_disk() -> Vec3 {
+        loop {
+            let p = Vec3(random_range(-1.0, 1.0), random_range(-1.0, 1.0), 0.0);
+            if p.square_magnitude() <= 1.0 {
+                break p;
+            }
+        }
     }
 }
 

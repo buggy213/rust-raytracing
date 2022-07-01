@@ -2,25 +2,33 @@ mod types;
 mod hittables;
 mod utils;
 mod camera;
+mod scene;
 
+use std::fs::File;
+use std::io::{self, Write};
+use std::path::Path;
+use std::sync::Arc;
+use std::thread::{self, JoinHandle};
+
+use clap::Parser;
 use hittables::hittable::Hittable;
 use rand::random;
+use scene::Scene;
 use types::vec3::{Vec3};
 use types::color::Color;
 use types::ray::Ray;
-use types::materials::Material::{Lambertian, Metal, Dielectric};
-
-use crate::camera::Camera;
-use crate::hittables::hittable_list::HittableList;
+use types::materials::Material::{self};
 use crate::hittables::sphere::Sphere;
+use crate::types::color;
+use crate::utils::random_scene;
 
-fn base_gradient(r: &Ray) -> Color {
+fn base_gradient(r: Ray) -> Color {
     let unit_direction: Vec3 = Vec3::normalized(r.direction);
     let t = 0.5 * (unit_direction.y() + 1.0);
     (1.0 - t) * Vec3(1.0, 1.0, 1.0) + t * Vec3(0.5, 0.7, 1.0)
 }
 
-fn ray_color(r: &Ray, world: &dyn Hittable, depth: i32) -> Color {
+fn ray_color(r: Ray, world: &dyn Hittable, depth: u32) -> Color {
     
     if depth <= 0 {
         return Vec3(0.0, 0.0, 0.0);
@@ -30,7 +38,7 @@ fn ray_color(r: &Ray, world: &dyn Hittable, depth: i32) -> Color {
         Some(record) => {
             match record.material.scatter(&r, &record) {
                 Some((attenuation, scattered)) => {
-                    attenuation * ray_color(&scattered, world, depth - 1)
+                    attenuation * ray_color(scattered, world, depth - 1)
                 }
                 // Absorbed
                 None => {
@@ -43,66 +51,93 @@ fn ray_color(r: &Ray, world: &dyn Hittable, depth: i32) -> Color {
         }
     }
 }
-pub const ASPECT_RATIO: f64 = 16.0 / 9.0;
-fn main() {
-    
-    const IMAGE_HEIGHT: i32 = 400;
-    const IMAGE_WIDTH: i32 = (IMAGE_HEIGHT as f64 * ASPECT_RATIO) as i32;
-    const SAMPLES_PER_PIXEL: i32 = 100;
-    const MAX_DEPTH: i32 = 50;
 
-    let camera = Camera::custom(Vec3(-2.0, 2.0, 1.0), Vec3(0.0, 0.0, -1.0), Vec3(0.0, 1.0, 0.0), ASPECT_RATIO, 20.0);
 
-    let material_ground = Lambertian(Vec3(0.8, 0.8, 0.0));
-    let material_center = Lambertian(Vec3(0.1, 0.2, 0.5));
-    let material_left = Dielectric(1.5);
-    let material_hollow = Dielectric(1.5);
-    let material_right = Metal(Vec3(0.8, 0.6, 0.2), 0.0);
-    let center = Sphere {
-        center: Vec3(0.0, 0.0, -1.0),
-        radius: 0.5,
-        material: material_center
-    };
-    let left_hollow = Sphere {
-        center: Vec3(-1.0, 0.0, -1.0),
-        radius: 0.5,
-        material: material_left
-    };
-    let left_inner = Sphere {
-        center: Vec3(-1.0, 0.0, -1.0),
-        radius: -0.4,
-        material: material_hollow
-    };
-    let right = Sphere {
-        center: Vec3(1.0, 0.0, -1.0),
-        radius: 0.5,
-        material: material_right
-    };
-    let ground = Sphere {
-        center: Vec3(0.0, -100.5, -1.0),
-        radius: 100.0,
-        material: material_ground
-    };
-    let world = from!(Box::new(ground), Box::new(center), Box::new(left_hollow), Box::new(left_inner), Box::new(right)); 
+#[derive(Parser)]
+struct Arguments {
+    #[clap(short='s', long="samples")]
+    num_samples: u32,
+    #[clap(short='m', long="multithreaded")]
+    multithreaded: bool,
+    #[clap(short='o', long="output")]
+    output_file: Option<String>
+}
 
-    println!("P3");
-    println!("{} {}", IMAGE_WIDTH, IMAGE_HEIGHT);
-    println!("255");
+const MAX_DEPTH: u32 = 50;
+fn render(scene: &Scene, identifier: u32) -> Vec<Color> {
+    let mut color_data: Vec<Color> = Vec::new();
 
-    for j in (0..IMAGE_HEIGHT).rev() {
-        eprintln!("Scanlines remaining: {}", j);
-        for i in 0..IMAGE_WIDTH {            
+    for j in (0..scene.height).rev() {
+        eprintln!("[{}] Scanlines remaining: {}", identifier, j);
+        for i in 0..scene.width {            
             let mut color: Color = Vec3(0.0, 0.0, 0.0);
-
-            for _s in 0..SAMPLES_PER_PIXEL {
-                let u = (random::<f64>() + i as f64) / (IMAGE_WIDTH - 1) as f64;
-                let v = (random::<f64>() + j as f64) / (IMAGE_HEIGHT - 1) as f64;
-                let ray: Ray = camera.get_ray(u, v);
-                color += ray_color(&ray, &world, MAX_DEPTH);
+            
+            for _s in 0..scene.samples_per_pixel {
+                let u = (random::<f64>() + i as f64) / (scene.width - 1) as f64;
+                let v = (random::<f64>() + j as f64) / (scene.height - 1) as f64;
+                let ray: Ray = scene.camera.get_ray(u, v);
+                color += ray_color(ray, &scene.world, MAX_DEPTH) / scene.samples_per_pixel.into();
             }
-            Color::write_color(color, SAMPLES_PER_PIXEL);
+            color_data.push(color);
         }
     }
+    eprintln!("[{}] Done", identifier);
 
-    eprintln!("Done");
+    color_data
 }
+
+fn average_color_data(color_data_vec: &Vec<Vec<Color>>, size: usize) -> Vec<Color> {
+    let mut result = vec![Vec3(0.0, 0.0, 0.0); size];
+    for color_data in color_data_vec.iter() {
+        for (i, color) in color_data.iter().enumerate() {
+            result[i] += *color;
+        }
+    }
+    result = result.iter().map(|x: &Color| *x / color_data_vec.len() as f64).collect();
+    result
+}
+
+fn main() {
+    let Arguments { num_samples, multithreaded, output_file } = Arguments::parse();
+    eprintln!("num_samples: {}, multithreaded: {}", num_samples, multithreaded);
+    let mut scene = random_scene(num_samples);
+    let color_data;
+    if !multithreaded {
+        color_data = render(&scene, 0);
+    }
+    else {
+        let mut color_data_vec: Vec<Vec<Color>> = Vec::new();
+        let mut children: Vec<JoinHandle<Vec<Color>>> = Vec::new();
+
+        let cores = num_cpus::get() as u32;
+
+        scene.samples_per_pixel /= cores;
+        scene.samples_per_pixel += 1;
+
+        let scene_ref = Arc::new(scene);
+
+        
+        for i in 0..cores {
+            let shared_scene = scene_ref.clone();
+            children.push(thread::spawn(move || {
+                render(&shared_scene, i)
+            }));
+        }
+        for child in children.into_iter() {
+            color_data_vec.push(child.join().expect("thread failed"));
+        }
+
+        color_data = average_color_data(&color_data_vec, (scene_ref.width * scene_ref.height) as usize);
+        scene = Arc::try_unwrap(scene_ref).expect("unable to move scene out of shared ownership");
+    }
+
+    if let Some(filename) = output_file {
+        let file = File::create(Path::new(&filename)).expect("unable to create file");
+        scene.print_ppm(&color_data, file).expect("failed to print output");
+    }
+    else {
+        scene.print_ppm(&color_data, io::stdout()).expect("failed to print output");
+    }
+}
+
+
