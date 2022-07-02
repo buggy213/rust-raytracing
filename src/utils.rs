@@ -13,6 +13,7 @@ use crate::hittables::hittable_list::HittableList;
 use crate::hittables::moving_sphere::MovingSphere;
 use crate::scene::Scene;
 use crate::types::texture::CheckerTexture;
+use crate::types::texture::NoiseTexture;
 use crate::types::texture::SolidColor;
 
 pub fn degrees_to_radians(deg: f64) -> f64 {
@@ -30,14 +31,16 @@ pub fn clamp(x: f64, min: f64, max: f64) -> f64 {
 #[derive(Clone, ArgEnum)]
 pub enum PresetScene {
     JumpingBalls,
-    TwoSpheres
+    TwoSpheres,
+    TwoPerlinSpheres
 }
 
 impl PresetScene {
     pub fn get(&self, samples_per_pixel: u32) -> Scene {
         match self {
             PresetScene::JumpingBalls => random_scene(samples_per_pixel),
-            PresetScene::TwoSpheres => two_spheres(samples_per_pixel)
+            PresetScene::TwoSpheres => two_spheres(samples_per_pixel),
+            PresetScene::TwoPerlinSpheres => two_perlin_spheres(samples_per_pixel)
         }
     }
 }
@@ -158,7 +161,7 @@ pub fn random_scene(samples_per_pixel: u32) -> Scene {
     }
 }
 
-pub fn two_spheres(samples_per_pixel: u32) -> Scene {
+pub fn diagonal_view(samples_per_pixel: u32, world: HittableList) -> Scene {
     pub const ASPECT_RATIO: f64 = 16.0 / 9.0;
     const IMAGE_WIDTH: u32 = 400;
     const IMAGE_HEIGHT: u32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u32;
@@ -178,8 +181,11 @@ pub fn two_spheres(samples_per_pixel: u32) -> Scene {
         0.0,
         1.0
     );
-
     
+    Scene { camera, world, aspect_ratio: ASPECT_RATIO, height: IMAGE_HEIGHT, width: IMAGE_WIDTH, samples_per_pixel }
+}
+
+pub fn two_spheres(samples_per_pixel: u32) -> Scene {
     let bottom_checker = CheckerTexture::make_solid_checkered(Vec3(0.2, 0.3, 0.1), Vec3(0.9, 0.9, 0.9));
     let bottom_sphere = Sphere {
         center: Vec3(0.0, -10.0, 0.0),
@@ -196,5 +202,80 @@ pub fn two_spheres(samples_per_pixel: u32) -> Scene {
 
     let world = hittable_list!(Box::new(bottom_sphere), Box::new(top_sphere));
     
-    Scene { camera, world, aspect_ratio: ASPECT_RATIO, height: IMAGE_HEIGHT, width: IMAGE_WIDTH, samples_per_pixel }
+    diagonal_view(samples_per_pixel, world)
+}
+
+pub fn two_perlin_spheres(samples_per_pixel: u32) -> Scene {
+    let bottom_perlin = NoiseTexture::new();
+    let bottom_sphere = Sphere {
+        center: Vec3(0.0, -1000.0, 0.0),
+        radius: 1000.0,
+        material: Lambertian { albedo: Box::new(bottom_perlin) }
+    };
+
+    let top_perlin = NoiseTexture::new();
+    let top_sphere = Sphere {
+        center: Vec3(0.0, 2.0, 0.0),
+        radius: 2.0,
+        material: Lambertian { albedo: Box::new(top_perlin) }
+    };
+
+    let world = hittable_list!(Box::new(bottom_sphere), Box::new(top_sphere));
+
+    diagonal_view(samples_per_pixel, world)
+}
+
+pub mod perlin {
+    use rand::{Rng, random};
+
+    use crate::types::vec3::Point;
+
+    const POINT_COUNT: usize = 256;
+
+    pub struct Perlin {
+        perm_x: [i32; POINT_COUNT],
+        perm_y: [i32; POINT_COUNT],
+        perm_z: [i32; POINT_COUNT],
+        ranfloat: [f64; POINT_COUNT],
+    }
+
+    impl Perlin {
+
+        pub fn new() -> Perlin {
+            let mut ranfloat = [0.0; POINT_COUNT];
+            for i in 0..POINT_COUNT {
+                ranfloat[i] = random();
+            }
+
+            Perlin { 
+                perm_x: Perlin::generate_perm(), 
+                perm_y: Perlin::generate_perm(), 
+                perm_z: Perlin::generate_perm(), 
+                ranfloat
+            }
+        }
+
+        pub fn noise(&self, p: Point) -> f64 {
+            let i = ((4.0 * p.x()) as i32) & 255;
+            let j = ((4.0 * p.y()) as i32) & 255;
+            let k = ((4.0 * p.z()) as i32) & 255;
+            self.ranfloat[(self.perm_x[i as usize] ^ self.perm_y[j as usize] ^ self.perm_z[k as usize]) as usize]
+        }
+
+        fn generate_perm() -> [i32; POINT_COUNT] {
+            let mut p: [i32; POINT_COUNT] = [0; POINT_COUNT];
+            for i in 0..POINT_COUNT {
+                p[i] = i as i32;
+            }
+            Perlin::permute(&mut p, POINT_COUNT);
+            p
+        }
+
+        fn permute(perm: &mut [i32; POINT_COUNT], n: usize) {
+            for i in (1..n).rev() {
+                let target = rand::thread_rng().gen_range(0..=i);
+                perm.swap(i, target);
+            }
+        }
+    }
 }

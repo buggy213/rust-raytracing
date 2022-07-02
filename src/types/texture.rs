@@ -1,4 +1,6 @@
-use super::{vec3::Point, color::Color};
+use crate::utils::perlin::Perlin;
+
+use super::{vec3::{Point, Vec3}, color::Color};
 
 pub trait Texture: Send + Sync {
     fn value(&self, u: f64, v: f64, p: Point) -> Color;
@@ -40,5 +42,21 @@ impl CheckerTexture {
             odd: Box::new(odd),
             even: Box::new(even)
         }
+    }
+}
+
+pub struct NoiseTexture {
+    noise: Perlin
+}
+
+impl Texture for NoiseTexture {
+    fn value(&self, u: f64, v: f64, p: Point) -> Color {
+        Vec3(1.0, 1.0, 1.0) * self.noise.noise(p)
+    }
+}
+
+impl NoiseTexture {
+    pub fn new() -> NoiseTexture {
+        NoiseTexture { noise: Perlin::new() }
     }
 }
