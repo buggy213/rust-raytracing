@@ -1,4 +1,5 @@
 use std::f64::consts::PI;
+use std::sync::Arc;
 use clap::clap_derive::ArgEnum;
 use rand::random;
 use crate::Background;
@@ -20,6 +21,7 @@ use crate::types::texture::CheckerTexture;
 use crate::types::texture::ImageTexture;
 use crate::types::texture::NoiseTexture;
 use crate::types::texture::SolidColor;
+use crate::types::texture::Texture;
 
 pub fn degrees_to_radians(deg: f64) -> f64 {
     2.0 * PI * deg / 360.0
@@ -86,7 +88,7 @@ pub fn random_scene(samples_per_pixel: u32) -> Scene {
     let mut world = HittableList::new();
     let ground_texture: CheckerTexture = CheckerTexture::make_solid_checkered(Vec3(0.2, 0.3, 0.1), Vec3(0.9, 0.9, 0.9));
     let ground_material= Lambertian { 
-        albedo: Box::new(ground_texture)
+        albedo: Arc::new(ground_texture)
     };
     world.add(Box::new(Sphere {
         center: Vec3(0.0, -1000.0, 0.0), 
@@ -106,7 +108,7 @@ pub fn random_scene(samples_per_pixel: u32) -> Scene {
                     // diffuse
                     let albedo = color::random_color() * color::random_color();
                     let texture: SolidColor = albedo.into();
-                    sphere_material = Lambertian { albedo: Box::new(texture) };
+                    sphere_material = Lambertian { albedo: Arc::new(texture) };
                     let center2 = center + Vec3(0.0, random_range(0.0, 0.5), 0.0);
                     world.add(Box::new(MovingSphere {
                         start_position: center,
@@ -150,7 +152,7 @@ pub fn random_scene(samples_per_pixel: u32) -> Scene {
 
     let texture: SolidColor = Vec3(0.4, 0.2, 0.1).into();
     let material2 = Lambertian {
-        albedo: Box::new(texture)
+        albedo: Arc::new(texture)
     };
     world.add(Box::new(Sphere { 
         center: Vec3(-4.0, 1.0, 0.0), 
@@ -212,18 +214,18 @@ pub fn diagonal_view(samples_per_pixel: u32, world: HittableList) -> Scene {
 }
 
 pub fn two_spheres(samples_per_pixel: u32) -> Scene {
-    let bottom_checker = CheckerTexture::make_solid_checkered(Vec3(0.2, 0.3, 0.1), Vec3(0.9, 0.9, 0.9));
+    let checker: Arc<dyn Texture> = Arc::new(CheckerTexture::make_solid_checkered(Vec3(0.2, 0.3, 0.1), Vec3(0.9, 0.9, 0.9)));
     let bottom_sphere = Sphere {
         center: Vec3(0.0, -10.0, 0.0),
         radius: 10.0,
-        material: Lambertian { albedo: Box::new(bottom_checker) }
+        material: Lambertian { albedo: checker.clone() }
     };
 
     let top_checker = CheckerTexture::make_solid_checkered(Vec3(0.2, 0.3, 0.1), Vec3(0.9, 0.9, 0.9));
     let top_sphere = Sphere {
         center: Vec3(0.0, 10.0, 0.0),
         radius: 10.0,
-        material: Lambertian { albedo: Box::new(top_checker) }
+        material: Lambertian { albedo: checker.clone() }
     };
 
     let world = hittable_list!(Box::new(bottom_sphere), Box::new(top_sphere));
@@ -232,18 +234,18 @@ pub fn two_spheres(samples_per_pixel: u32) -> Scene {
 }
 
 pub fn two_perlin_spheres(samples_per_pixel: u32) -> Scene {
-    let bottom_perlin = NoiseTexture::new(4.0);
+    let perlin = Arc::new(NoiseTexture::new(4.0));
     let bottom_sphere = Sphere {
         center: Vec3(0.0, -1000.0, 0.0),
         radius: 1000.0,
-        material: Lambertian { albedo: Box::new(bottom_perlin) }
+        material: Lambertian { albedo: perlin.clone() }
     };
 
     let top_perlin = NoiseTexture::new(4.0);
     let top_sphere = Sphere {
         center: Vec3(0.0, 2.0, 0.0),
         radius: 2.0,
-        material: Lambertian { albedo: Box::new(top_perlin) }
+        material: Lambertian { albedo: perlin.clone() }
     };
 
     let world = hittable_list!(Box::new(bottom_sphere), Box::new(top_sphere));
@@ -253,7 +255,7 @@ pub fn two_perlin_spheres(samples_per_pixel: u32) -> Scene {
 
 pub fn earth(samples_per_pixel: u32) -> Scene {
     let earth_texture = ImageTexture::from("textures/earthmap.jpg");
-    let earth_material = Lambertian { albedo: Box::new(earth_texture) };
+    let earth_material = Lambertian { albedo: Arc::new(earth_texture) };
     let globe = Sphere {
         center: Vec3(0.0, 0.0, 0.0),
         radius: 2.0,
@@ -266,22 +268,22 @@ pub fn earth(samples_per_pixel: u32) -> Scene {
 }
 
 pub fn simple_light(samples_per_pixel: u32) -> Scene {
-    let bottom_perlin = NoiseTexture::new(4.0);
+    let perlin = Arc::new(NoiseTexture::new(4.0));
     let bottom_sphere = Sphere {
         center: Vec3(0.0, -1000.0, 0.0),
         radius: 1000.0,
-        material: Lambertian { albedo: Box::new(bottom_perlin) }
+        material: Lambertian { albedo: perlin.clone() }
     };
 
     let top_perlin = NoiseTexture::new(4.0);
     let top_sphere = Sphere {
         center: Vec3(0.0, 2.0, 0.0),
         radius: 2.0,
-        material: Lambertian { albedo: Box::new(top_perlin) }
+        material: Lambertian { albedo: perlin.clone() }
     };
 
     let diffuse_light = DiffuseLight { 
-        emit: Box::new(SolidColor::from(Vec3(4.0, 4.0, 4.0)))
+        emit: Arc::new(SolidColor::from(Vec3(4.0, 4.0, 4.0)))
     };
     let rect_light = XY {
         a0: 3.0,
@@ -326,22 +328,18 @@ pub fn simple_light(samples_per_pixel: u32) -> Scene {
 
 pub fn cornell_box(samples_per_pixel: u32) -> Scene {
     let red = Lambertian {
-        albedo: Box::new(SolidColor::from(Vec3(0.65, 0.05, 0.05)))
+        albedo: Arc::new(SolidColor::from(Vec3(0.65, 0.05, 0.05)))
     };
-    let white0 = Lambertian {
-        albedo: Box::new(SolidColor::from(Vec3(0.73, 0.73, 0.73)))
-    };
-    let white1 = Lambertian {
-        albedo: Box::new(SolidColor::from(Vec3(0.73, 0.73, 0.73)))
-    };
-    let white2 = Lambertian {
-        albedo: Box::new(SolidColor::from(Vec3(0.73, 0.73, 0.73)))
+
+    let white_material = Arc::new(SolidColor::from(Vec3(0.73, 0.73, 0.73)));
+    let white = Lambertian {
+        albedo: white_material
     };
     let green = Lambertian {
-        albedo: Box::new(SolidColor::from(Vec3(0.12, 0.45, 0.15)))
+        albedo: Arc::new(SolidColor::from(Vec3(0.12, 0.45, 0.15)))
     };
     let light = DiffuseLight {
-        emit: Box::new(SolidColor::from(Vec3(15.0, 15.0, 15.0)))
+        emit: Arc::new(SolidColor::from(Vec3(15.0, 15.0, 15.0)))
     };
 
     let wall0 = YZ {
@@ -374,7 +372,7 @@ pub fn cornell_box(samples_per_pixel: u32) -> Scene {
         b0: 0.0,
         b1: 555.0,
         k: 0.0,
-        material: white0
+        material: white.clone()
     };
     let wall4 = XZ {
         a0: 0.0,
@@ -382,7 +380,7 @@ pub fn cornell_box(samples_per_pixel: u32) -> Scene {
         b0: 0.0,
         b1: 555.0,
         k: 555.0,
-        material: white1
+        material: white.clone()
     };
     let wall5 = XY {
         a0: 0.0,
@@ -390,7 +388,7 @@ pub fn cornell_box(samples_per_pixel: u32) -> Scene {
         b0: 0.0,
         b1: 555.0,
         k: 555.0,
-        material: white2
+        material: white
     };
 
     let world = hittable_list!(Box::new(wall0), Box::new(wall1), Box::new(wall2), Box::new(wall3), Box::new(wall4), Box::new(wall5));

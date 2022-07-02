@@ -1,12 +1,14 @@
+use std::{rc::Rc, sync::Arc};
+
 use rand::random;
 
 use crate::hittables::hittable::HitRecord;
 
 use super::{ray::Ray, color::Color, vec3::{Vec3, Point}, texture::Texture};
-
+#[derive(Clone)]
 pub enum Material {
     Lambertian {
-        albedo: Box<dyn Texture>
+        albedo: Arc<dyn Texture>
     },
     Metal {
         albedo: Color,
@@ -16,7 +18,7 @@ pub enum Material {
         index_of_refraction: f64
     },
     DiffuseLight {
-        emit: Box<dyn Texture>
+        emit: Arc<dyn Texture>
     }
 }
 
