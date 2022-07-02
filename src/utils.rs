@@ -1,4 +1,5 @@
 use std::f64::consts::PI;
+use clap::clap_derive::ArgEnum;
 use rand::random;
 use crate::Material::*;
 use crate::Vec3;
@@ -7,6 +8,7 @@ use crate::Material;
 use crate::camera::Camera;
 use crate::color;
 
+use crate::hittable_list;
 use crate::hittables::hittable_list::HittableList;
 use crate::hittables::moving_sphere::MovingSphere;
 use crate::scene::Scene;
@@ -23,6 +25,21 @@ pub fn random_range(min: f64, max: f64) -> f64 {
 
 pub fn clamp(x: f64, min: f64, max: f64) -> f64 {
     if x < min { min } else if x > max { max } else { x }
+}
+
+#[derive(Clone, ArgEnum)]
+pub enum PresetScene {
+    JumpingBalls,
+    TwoSpheres
+}
+
+impl PresetScene {
+    pub fn get(&self, samples_per_pixel: u32) -> Scene {
+        match self {
+            PresetScene::JumpingBalls => random_scene(samples_per_pixel),
+            PresetScene::TwoSpheres => two_spheres(samples_per_pixel)
+        }
+    }
 }
 
 pub fn random_scene(samples_per_pixel: u32) -> Scene {
@@ -139,4 +156,45 @@ pub fn random_scene(samples_per_pixel: u32) -> Scene {
         width: IMAGE_WIDTH,
         samples_per_pixel
     }
+}
+
+pub fn two_spheres(samples_per_pixel: u32) -> Scene {
+    pub const ASPECT_RATIO: f64 = 16.0 / 9.0;
+    const IMAGE_WIDTH: u32 = 400;
+    const IMAGE_HEIGHT: u32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u32;
+    
+
+    let look_from = Vec3(13.0, 2.0, 3.0);
+    let look_at = Vec3(0.0, 0.0, 0.0);
+    let focus_dist = 10.0;
+    let camera = Camera::custom(
+        look_from,
+        look_at,
+        Vec3(0.0, 1.0, 0.0), 
+        ASPECT_RATIO, 
+        20.0,
+        0.0,
+        focus_dist,
+        0.0,
+        1.0
+    );
+
+    
+    let bottom_checker = CheckerTexture::make_solid_checkered(Vec3(0.2, 0.3, 0.1), Vec3(0.9, 0.9, 0.9));
+    let bottom_sphere = Sphere {
+        center: Vec3(0.0, -10.0, 0.0),
+        radius: 10.0,
+        material: Lambertian { albedo: Box::new(bottom_checker) }
+    };
+
+    let top_checker = CheckerTexture::make_solid_checkered(Vec3(0.2, 0.3, 0.1), Vec3(0.9, 0.9, 0.9));
+    let top_sphere = Sphere {
+        center: Vec3(0.0, 10.0, 0.0),
+        radius: 10.0,
+        material: Lambertian { albedo: Box::new(top_checker) }
+    };
+
+    let world = hittable_list!(Box::new(bottom_sphere), Box::new(top_sphere));
+    
+    Scene { camera, world, aspect_ratio: ASPECT_RATIO, height: IMAGE_HEIGHT, width: IMAGE_WIDTH, samples_per_pixel }
 }

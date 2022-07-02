@@ -4,7 +4,7 @@ use crate::types::{ray::Ray, aabb::AABB};
 use super::hittable::{Hittable, HitRecord};
 
 pub struct HittableList {
-    objects: Vec<Box<dyn Hittable>>
+    pub objects: Vec<Box<dyn Hittable>>
 }
 
 impl Debug for HittableList {

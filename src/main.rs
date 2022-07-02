@@ -4,6 +4,7 @@ mod utils;
 mod camera;
 mod scene;
 
+use core::num;
 use std::fs::File;
 use std::io::{self, Write};
 use std::path::Path;
@@ -18,6 +19,7 @@ use types::vec3::{Vec3};
 use types::color::Color;
 use types::ray::Ray;
 use types::materials::Material::{self};
+use utils::PresetScene;
 use crate::hittables::sphere::Sphere;
 use crate::types::color;
 use crate::utils::random_scene;
@@ -60,7 +62,9 @@ struct Arguments {
     #[clap(short='m', long="multithreaded")]
     multithreaded: bool,
     #[clap(short='o', long="output")]
-    output_file: Option<String>
+    output_file: Option<String>,
+    #[clap(long="scene", arg_enum, value_parser, default_value_t=PresetScene::JumpingBalls)]
+    preset_scene: PresetScene
 }
 
 const MAX_DEPTH: u32 = 50;
@@ -98,9 +102,9 @@ fn average_color_data(color_data_vec: &Vec<Vec<Color>>, size: usize) -> Vec<Colo
 }
 
 fn main() {
-    let Arguments { num_samples, multithreaded, output_file } = Arguments::parse();
+    let Arguments { num_samples, multithreaded, output_file, preset_scene  } = Arguments::parse();
     eprintln!("num_samples: {}, multithreaded: {}", num_samples, multithreaded);
-    let mut scene = random_scene(num_samples);
+    let mut scene = preset_scene.get(num_samples);
     let color_data;
     if !multithreaded {
         color_data = render(&scene, 0);
