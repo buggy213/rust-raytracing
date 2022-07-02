@@ -19,9 +19,9 @@ impl Scene {
         writeln!(output, "255")?;
         for pixel in color_data.iter() {
             writeln!(output, "{} {} {}", 
-                    (clamp(pixel.0, 0.0, 1.0) * 256.0) as i32, 
-                    (clamp(pixel.1, 0.0, 1.0) * 256.0) as i32,
-                    (clamp(pixel.2, 0.0, 1.0) * 256.0) as i32)?;
+                    (clamp(pixel.0.sqrt(), 0.0, 1.0) * 256.0) as i32, 
+                    (clamp(pixel.1.sqrt(), 0.0, 1.0) * 256.0) as i32,
+                    (clamp(pixel.2.sqrt(), 0.0, 1.0) * 256.0) as i32)?;
         }
 
         Ok(())

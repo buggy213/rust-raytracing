@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::types::ray::Ray;
+use crate::types::{ray::Ray, aabb::AABB};
 use super::hittable::{Hittable, HitRecord};
 
 pub struct HittableList {
@@ -42,5 +42,25 @@ impl Hittable for HittableList {
             }
         }
         return_value
+    }
+
+    fn bounding_box(&self, t0: f64, t1: f64) -> Option<AABB> {
+        if self.objects.is_empty() {
+            return None;
+        }
+        let aabb = self.objects[0].bounding_box(t0, t1);
+        if aabb.is_none() {
+            return None;
+        }
+        let mut aabb = aabb.unwrap();
+        for hittable in self.objects.iter().skip(1) {
+            if let Some(bounding_box) = hittable.bounding_box(t0, t1) {
+                aabb = AABB::surrounding_box(aabb, bounding_box)
+            }
+            else {
+                return None;
+            }
+        }
+        Some(aabb)
     }
 }

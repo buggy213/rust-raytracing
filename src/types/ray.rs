@@ -3,7 +3,8 @@ use super::vec3::{Vec3, Point};
 #[derive(Clone, Copy)]
 pub struct Ray {
     pub origin: Point,
-    pub direction: Vec3
+    pub direction: Vec3,
+    pub time: f64
 }
 
 impl Ray {

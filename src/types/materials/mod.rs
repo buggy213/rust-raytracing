@@ -2,11 +2,11 @@ use rand::random;
 
 use crate::hittables::hittable::HitRecord;
 
-use super::{ray::Ray, color::Color, vec3::Vec3};
+use super::{ray::Ray, color::Color, vec3::Vec3, texture::Texture};
 
 pub enum Material {
     Lambertian {
-        albedo: Color
+        albedo: Box<dyn Texture>
     },
     Metal {
         albedo: Color,
@@ -25,7 +25,7 @@ impl Material {
         r0 + (1.0 - r0) * f64::powi(1.0 - cosine, 5)
     }
 
-    pub fn scatter(&self, ray_in: &Ray, record: &HitRecord) -> Option<(Color, Ray)> {
+    pub fn scatter(&self, ray_in: Ray, record: &HitRecord) -> Option<(Color, Ray)> {
         match self {
             Material::Lambertian { albedo } => {
                 let mut scatter_direction = record.normal + Vec3::random_unit_vector();
@@ -34,13 +34,13 @@ impl Material {
                     scatter_direction = record.normal;
                 }
 
-                let scattered = Ray { origin: record.p, direction: scatter_direction };
-                Some((*albedo, scattered))
+                let scattered = Ray { origin: record.p, direction: scatter_direction, ..ray_in };
+                Some((albedo.value(record.u, record.v, record.p), scattered))
             }
 
             Material::Metal { albedo, fuzz } => {
                 let reflected = Vec3::reflect(Vec3::normalized(ray_in.direction), record.normal);
-                let scattered = Ray { origin: record.p, direction: reflected + *fuzz * Vec3::random_in_unit_sphere() };
+                let scattered = Ray { origin: record.p, direction: reflected + *fuzz * Vec3::random_in_unit_sphere(), ..ray_in };
                 if Vec3::dot(scattered.direction, record.normal) > 0.0 { Some((*albedo, scattered)) } else { None }
             }
 
@@ -59,7 +59,7 @@ impl Material {
                 else {                    
                     Vec3::refract(unit_direction, record.normal, refraction_ratio)
                 };
-                let scattered = Ray { origin: record.p, direction: direction };
+                let scattered = Ray { origin: record.p, direction: direction, ..ray_in };
                 Some((Vec3(1.0, 1.0, 1.0), scattered))
             }
         }

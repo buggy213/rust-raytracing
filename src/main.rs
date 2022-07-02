@@ -36,7 +36,7 @@ fn ray_color(r: Ray, world: &dyn Hittable, depth: u32) -> Color {
 
     match world.hit(r, 0.001, f64::INFINITY) {
         Some(record) => {
-            match record.material.scatter(&r, &record) {
+            match record.material.scatter(r, &record) {
                 Some((attenuation, scattered)) => {
                     attenuation * ray_color(scattered, world, depth - 1)
                 }

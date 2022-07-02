@@ -2,7 +2,7 @@ use std::{ops::{self, MulAssign}};
 
 use rand::random;
 
-use crate::utils::random_range;
+use crate::utils::{random_range, clamp};
 
 #[derive(Clone, Copy, Default, Debug)]
 pub struct Vec3(pub f64, pub f64, pub f64);
@@ -105,6 +105,11 @@ impl Vec3 {
                 break p;
             }
         }
+    }
+
+    pub fn lerp(a: Vec3, b: Vec3, t: f64) -> Vec3 {
+        let clamped_t = clamp(t, 0.0, 1.0);
+        a * clamped_t + (1.0 - clamped_t) * b
     }
 }
 
