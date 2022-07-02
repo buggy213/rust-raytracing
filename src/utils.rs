@@ -226,7 +226,7 @@ pub fn two_perlin_spheres(samples_per_pixel: u32) -> Scene {
 }
 
 pub mod perlin {
-    use rand::{Rng, random};
+    use rand::{Rng};
 
     use crate::types::vec3::{Point, Vec3};
 

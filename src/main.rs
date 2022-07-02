@@ -4,9 +4,8 @@ mod utils;
 mod camera;
 mod scene;
 
-use core::num;
 use std::fs::File;
-use std::io::{self, Write};
+use std::io;
 use std::path::Path;
 use std::sync::Arc;
 use std::thread::{self, JoinHandle};

@@ -1,6 +1,3 @@
-use itertools::Itertools;
-use rand::{Rng, prelude::Distribution, distributions::Standard};
-
 use crate::hittables::hittable::{Hittable, HitRecord};
 
 use super::{aabb::AABB, ray::Ray};
@@ -41,7 +38,7 @@ impl Hittable for BVHNode {
         }
     }
 
-    fn bounding_box(&self, t0: f64, t1: f64) -> Option<AABB> {
+    fn bounding_box(&self, _t0: f64, _t1: f64) -> Option<AABB> {
         Some(self.aabb)
     }
 }
