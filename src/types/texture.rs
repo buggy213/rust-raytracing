@@ -46,7 +46,8 @@ impl CheckerTexture {
 }
 
 pub struct NoiseTexture {
-    noise: Perlin
+    noise: Perlin,
+    scale: f64
 }
 
 impl Texture for NoiseTexture {
@@ -56,7 +57,7 @@ impl Texture for NoiseTexture {
 }
 
 impl NoiseTexture {
-    pub fn new() -> NoiseTexture {
-        NoiseTexture { noise: Perlin::new() }
+    pub fn new(scale: f64) -> NoiseTexture {
+        NoiseTexture { noise: Perlin::new(), scale }
     }
 }

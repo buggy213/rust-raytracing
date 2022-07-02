@@ -206,14 +206,14 @@ pub fn two_spheres(samples_per_pixel: u32) -> Scene {
 }
 
 pub fn two_perlin_spheres(samples_per_pixel: u32) -> Scene {
-    let bottom_perlin = NoiseTexture::new();
+    let bottom_perlin = NoiseTexture::new(4.0);
     let bottom_sphere = Sphere {
         center: Vec3(0.0, -1000.0, 0.0),
         radius: 1000.0,
         material: Lambertian { albedo: Box::new(bottom_perlin) }
     };
 
-    let top_perlin = NoiseTexture::new();
+    let top_perlin = NoiseTexture::new(4.0);
     let top_sphere = Sphere {
         center: Vec3(0.0, 2.0, 0.0),
         radius: 2.0,
