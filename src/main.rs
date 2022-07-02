@@ -14,6 +14,7 @@ use clap::Parser;
 use hittables::hittable::Hittable;
 use rand::random;
 use scene::Scene;
+use types::texture::SolidColor;
 use types::vec3::{Vec3};
 use types::color::Color;
 use types::ray::Ray;
@@ -21,34 +22,52 @@ use types::materials::Material::{self};
 use utils::PresetScene;
 use crate::hittables::sphere::Sphere;
 use crate::types::color;
-use crate::utils::random_scene;
 
-fn base_gradient(r: Ray) -> Color {
-    let unit_direction: Vec3 = Vec3::normalized(r.direction);
-    let t = 0.5 * (unit_direction.y() + 1.0);
-    (1.0 - t) * Vec3(1.0, 1.0, 1.0) + t * Vec3(0.5, 0.7, 1.0)
+#[derive(Debug)]
+pub enum Background {
+    SolidColor(Color),
+    VerticalGradient {
+        bottom: Color,
+        top: Color
+    }
 }
 
-fn ray_color(r: Ray, world: &dyn Hittable, depth: u32) -> Color {
-    
+impl Background {
+    fn get_color(&self, r: Ray) -> Color {
+        match self {
+            Background::SolidColor(color) => {
+                *color
+            }
+            Background::VerticalGradient { bottom, top } => {
+                let unit_direction: Vec3 = Vec3::normalized(r.direction);
+                let t = 0.5 * (unit_direction.y() + 1.0);
+                (1.0 - t) * (*top) + t * (*bottom)
+            }
+        }
+    }
+}
+
+fn ray_color(r: Ray, world: &dyn Hittable, depth: u32, background: &Background) -> Color {
     if depth <= 0 {
         return Vec3(0.0, 0.0, 0.0);
     }
 
     match world.hit(r, 0.001, f64::INFINITY) {
         Some(record) => {
+            let emitted = record.material.emitted(record.u, record.v, record.p).unwrap_or_default();
+            
             match record.material.scatter(r, &record) {
                 Some((attenuation, scattered)) => {
-                    attenuation * ray_color(scattered, world, depth - 1)
+                    emitted + attenuation * ray_color(scattered, world, depth - 1, background)
                 }
                 // Absorbed
                 None => {
-                    Vec3(0.0, 0.0, 0.0)
+                    emitted
                 }
             }
         },
         None => {
-            base_gradient(r)
+            background.get_color(r)
         }
     }
 }
@@ -79,7 +98,7 @@ fn render(scene: &Scene, identifier: u32) -> Vec<Color> {
                 let u = (random::<f64>() + i as f64) / (scene.width - 1) as f64;
                 let v = (random::<f64>() + j as f64) / (scene.height - 1) as f64;
                 let ray: Ray = scene.camera.get_ray(u, v);
-                color += ray_color(ray, &scene.world, MAX_DEPTH) / scene.samples_per_pixel.into();
+                color += ray_color(ray, &scene.world, MAX_DEPTH, &scene.background) / scene.samples_per_pixel.into();
             }
             color_data.push(color);
         }

@@ -2,7 +2,7 @@ use rand::random;
 
 use crate::hittables::hittable::HitRecord;
 
-use super::{ray::Ray, color::Color, vec3::Vec3, texture::Texture};
+use super::{ray::Ray, color::Color, vec3::{Vec3, Point}, texture::Texture};
 
 pub enum Material {
     Lambertian {
@@ -15,6 +15,9 @@ pub enum Material {
     Dielectric {
         index_of_refraction: f64
     },
+    DiffuseLight {
+        emit: Box<dyn Texture>
+    }
 }
 
 impl Material {
@@ -61,6 +64,19 @@ impl Material {
                 };
                 let scattered = Ray { origin: record.p, direction: direction, ..ray_in };
                 Some((Vec3(1.0, 1.0, 1.0), scattered))
+            },
+            Material::DiffuseLight { emit } => {
+                None
+            }
+        }
+    }
+    pub fn emitted(&self, u: f64, v: f64, p: Point) -> Option<Color> {
+        match self {
+            Material::DiffuseLight { emit } => {
+                Some(emit.value(u, v, p))
+            }
+            _ => {
+                None
             }
         }
     }

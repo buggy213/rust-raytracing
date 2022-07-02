@@ -1,6 +1,7 @@
 use std::f64::consts::PI;
 use clap::clap_derive::ArgEnum;
 use rand::random;
+use crate::Background;
 use crate::Material::*;
 use crate::Vec3;
 use crate::Sphere;
@@ -13,6 +14,7 @@ use crate::hittables::hittable_list::HittableList;
 use crate::hittables::moving_sphere::MovingSphere;
 use crate::scene::Scene;
 use crate::types::texture::CheckerTexture;
+use crate::types::texture::ImageTexture;
 use crate::types::texture::NoiseTexture;
 use crate::types::texture::SolidColor;
 
@@ -24,15 +26,22 @@ pub fn random_range(min: f64, max: f64) -> f64 {
     random::<f64>() * (max - min) + min
 }
 
-pub fn clamp(x: f64, min: f64, max: f64) -> f64 {
-    if x < min { min } else if x > max { max } else { x }
+pub trait Clamp<T> {
+    fn clamp(&self, min: T, max: T) -> T;
+}
+
+impl Clamp<f64> for f64 {
+    fn clamp(&self, min: f64, max: f64) -> f64 {
+        if *self < min { min } else if *self > max { max } else { *self }
+    }
 }
 
 #[derive(Clone, ArgEnum)]
 pub enum PresetScene {
     JumpingBalls,
     TwoSpheres,
-    TwoPerlinSpheres
+    TwoPerlinSpheres,
+    Earth
 }
 
 impl PresetScene {
@@ -40,7 +49,8 @@ impl PresetScene {
         match self {
             PresetScene::JumpingBalls => random_scene(samples_per_pixel),
             PresetScene::TwoSpheres => two_spheres(samples_per_pixel),
-            PresetScene::TwoPerlinSpheres => two_perlin_spheres(samples_per_pixel)
+            PresetScene::TwoPerlinSpheres => two_perlin_spheres(samples_per_pixel),
+            PresetScene::Earth => earth(samples_per_pixel)
         }
     }
 }
@@ -157,7 +167,8 @@ pub fn random_scene(samples_per_pixel: u32) -> Scene {
         aspect_ratio: ASPECT_RATIO,
         height: IMAGE_HEIGHT,
         width: IMAGE_WIDTH,
-        samples_per_pixel
+        samples_per_pixel,
+        background: Background::VerticalGradient { bottom: Vec3(0.5, 0.7, 1.0), top: Vec3(1.0, 1.0, 1.0) }
     }
 }
 
@@ -182,7 +193,15 @@ pub fn diagonal_view(samples_per_pixel: u32, world: HittableList) -> Scene {
         1.0
     );
     
-    Scene { camera, world, aspect_ratio: ASPECT_RATIO, height: IMAGE_HEIGHT, width: IMAGE_WIDTH, samples_per_pixel }
+    Scene { 
+        camera, 
+        world, 
+        aspect_ratio: ASPECT_RATIO, 
+        height: IMAGE_HEIGHT, 
+        width: IMAGE_WIDTH, 
+        samples_per_pixel,
+        background: Background::VerticalGradient { bottom: Vec3(0.5, 0.7, 1.0), top: Vec3(1.0, 1.0, 1.0) } 
+    }
 }
 
 pub fn two_spheres(samples_per_pixel: u32) -> Scene {
@@ -221,6 +240,20 @@ pub fn two_perlin_spheres(samples_per_pixel: u32) -> Scene {
     };
 
     let world = hittable_list!(Box::new(bottom_sphere), Box::new(top_sphere));
+
+    diagonal_view(samples_per_pixel, world)
+}
+
+pub fn earth(samples_per_pixel: u32) -> Scene {
+    let earth_texture = ImageTexture::from("textures/earthmap.jpg");
+    let earth_material = Lambertian { albedo: Box::new(earth_texture) };
+    let globe = Sphere {
+        center: Vec3(0.0, 0.0, 0.0),
+        radius: 2.0,
+        material: earth_material
+    };
+    
+    let world = hittable_list!(Box::new(globe));
 
     diagonal_view(samples_per_pixel, world)
 }
