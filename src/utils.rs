@@ -10,6 +10,7 @@ use crate::camera::Camera;
 use crate::color;
 
 use crate::hittable_list;
+use crate::hittables::aarect::XY;
 use crate::hittables::hittable_list::HittableList;
 use crate::hittables::moving_sphere::MovingSphere;
 use crate::scene::Scene;
@@ -41,7 +42,8 @@ pub enum PresetScene {
     JumpingBalls,
     TwoSpheres,
     TwoPerlinSpheres,
-    Earth
+    Earth,
+    SimpleLight
 }
 
 impl PresetScene {
@@ -50,7 +52,8 @@ impl PresetScene {
             PresetScene::JumpingBalls => random_scene(samples_per_pixel),
             PresetScene::TwoSpheres => two_spheres(samples_per_pixel),
             PresetScene::TwoPerlinSpheres => two_perlin_spheres(samples_per_pixel),
-            PresetScene::Earth => earth(samples_per_pixel)
+            PresetScene::Earth => earth(samples_per_pixel),
+            PresetScene::SimpleLight => simple_light(samples_per_pixel)
         }
     }
 }
@@ -256,6 +259,65 @@ pub fn earth(samples_per_pixel: u32) -> Scene {
     let world = hittable_list!(Box::new(globe));
 
     diagonal_view(samples_per_pixel, world)
+}
+
+pub fn simple_light(samples_per_pixel: u32) -> Scene {
+    let bottom_perlin = NoiseTexture::new(4.0);
+    let bottom_sphere = Sphere {
+        center: Vec3(0.0, -1000.0, 0.0),
+        radius: 1000.0,
+        material: Lambertian { albedo: Box::new(bottom_perlin) }
+    };
+
+    let top_perlin = NoiseTexture::new(4.0);
+    let top_sphere = Sphere {
+        center: Vec3(0.0, 2.0, 0.0),
+        radius: 2.0,
+        material: Lambertian { albedo: Box::new(top_perlin) }
+    };
+
+    let diffuse_light = DiffuseLight { 
+        emit: Box::new(SolidColor::from(Vec3(4.0, 4.0, 4.0)))
+    };
+    let rect_light = XY {
+        a0: 3.0,
+        a1: 5.0,
+        b0: 1.0,
+        b1: 3.0,
+        k: -2.0,
+        material: diffuse_light
+    };
+
+    let world = hittable_list!(Box::new(bottom_sphere), Box::new(top_sphere), Box::new(rect_light));
+
+    pub const ASPECT_RATIO: f64 = 16.0 / 9.0;
+    const IMAGE_WIDTH: u32 = 400;
+    const IMAGE_HEIGHT: u32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u32;
+
+    let look_from = Vec3(26.0, 3.0, 6.0);
+    let look_at = Vec3(0.0, 2.0, 0.0);
+    let focus_dist = 10.0;
+    let camera = Camera::custom(
+        look_from,
+        look_at,
+        Vec3(0.0, 1.0, 0.0), 
+        ASPECT_RATIO, 
+        20.0,
+        0.0,
+        focus_dist,
+        0.0,
+        1.0
+    );
+    
+    Scene { 
+        camera, 
+        world, 
+        aspect_ratio: ASPECT_RATIO, 
+        height: IMAGE_HEIGHT, 
+        width: IMAGE_WIDTH, 
+        samples_per_pixel,
+        background: Background::SolidColor(Vec3(0.0, 0.0, 0.0))
+    }
 }
 
 pub mod perlin {
