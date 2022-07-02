@@ -11,6 +11,8 @@ use crate::color;
 
 use crate::hittable_list;
 use crate::hittables::aarect::XY;
+use crate::hittables::aarect::XZ;
+use crate::hittables::aarect::YZ;
 use crate::hittables::hittable_list::HittableList;
 use crate::hittables::moving_sphere::MovingSphere;
 use crate::scene::Scene;
@@ -43,7 +45,8 @@ pub enum PresetScene {
     TwoSpheres,
     TwoPerlinSpheres,
     Earth,
-    SimpleLight
+    SimpleLight,
+    CornellBox
 }
 
 impl PresetScene {
@@ -53,7 +56,8 @@ impl PresetScene {
             PresetScene::TwoSpheres => two_spheres(samples_per_pixel),
             PresetScene::TwoPerlinSpheres => two_perlin_spheres(samples_per_pixel),
             PresetScene::Earth => earth(samples_per_pixel),
-            PresetScene::SimpleLight => simple_light(samples_per_pixel)
+            PresetScene::SimpleLight => simple_light(samples_per_pixel),
+            PresetScene::CornellBox => cornell_box(samples_per_pixel)
         }
     }
 }
@@ -307,6 +311,107 @@ pub fn simple_light(samples_per_pixel: u32) -> Scene {
         focus_dist,
         0.0,
         1.0
+    );
+    
+    Scene { 
+        camera, 
+        world, 
+        aspect_ratio: ASPECT_RATIO, 
+        height: IMAGE_HEIGHT, 
+        width: IMAGE_WIDTH, 
+        samples_per_pixel,
+        background: Background::SolidColor(Vec3(0.0, 0.0, 0.0))
+    }
+}
+
+pub fn cornell_box(samples_per_pixel: u32) -> Scene {
+    let red = Lambertian {
+        albedo: Box::new(SolidColor::from(Vec3(0.65, 0.05, 0.05)))
+    };
+    let white0 = Lambertian {
+        albedo: Box::new(SolidColor::from(Vec3(0.73, 0.73, 0.73)))
+    };
+    let white1 = Lambertian {
+        albedo: Box::new(SolidColor::from(Vec3(0.73, 0.73, 0.73)))
+    };
+    let white2 = Lambertian {
+        albedo: Box::new(SolidColor::from(Vec3(0.73, 0.73, 0.73)))
+    };
+    let green = Lambertian {
+        albedo: Box::new(SolidColor::from(Vec3(0.12, 0.45, 0.15)))
+    };
+    let light = DiffuseLight {
+        emit: Box::new(SolidColor::from(Vec3(15.0, 15.0, 15.0)))
+    };
+
+    let wall0 = YZ {
+        a0: 0.0,
+        a1: 555.0,
+        b0: 0.0,
+        b1: 555.0,
+        k: 555.0,
+        material: green
+    };
+    let wall1 = YZ {
+        a0: 0.0,
+        a1: 555.0,
+        b0: 0.0,
+        b1: 555.0,
+        k: 0.0,
+        material: red
+    };
+    let wall2 = XZ {
+        a0: 213.0,
+        a1: 343.0,
+        b0: 227.0,
+        b1: 332.0,
+        k: 554.0,
+        material: light
+    };
+    let wall3 = XZ {
+        a0: 0.0,
+        a1: 555.0,
+        b0: 0.0,
+        b1: 555.0,
+        k: 0.0,
+        material: white0
+    };
+    let wall4 = XZ {
+        a0: 0.0,
+        a1: 555.0,
+        b0: 0.0,
+        b1: 555.0,
+        k: 555.0,
+        material: white1
+    };
+    let wall5 = XY {
+        a0: 0.0,
+        a1: 555.0,
+        b0: 0.0,
+        b1: 555.0,
+        k: 555.0,
+        material: white2
+    };
+
+    let world = hittable_list!(Box::new(wall0), Box::new(wall1), Box::new(wall2), Box::new(wall3), Box::new(wall4), Box::new(wall5));
+
+    pub const ASPECT_RATIO: f64 = 1.0;
+    const IMAGE_WIDTH: u32 = 600;
+    const IMAGE_HEIGHT: u32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u32;
+
+    let look_from = Vec3(278.0, 278.0, -800.0);
+    let look_at = Vec3(278.0, 278.0, 0.0);
+    let focus_dist = 10.0;
+    let camera = Camera::custom(
+        look_from,
+        look_at,
+        Vec3(0.0, 1.0, 0.0), 
+        ASPECT_RATIO, 
+        40.0,
+        0.0,
+        focus_dist,
+        0.0,
+        0.0
     );
     
     Scene { 
