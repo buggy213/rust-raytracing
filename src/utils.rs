@@ -228,7 +228,7 @@ pub fn two_perlin_spheres(samples_per_pixel: u32) -> Scene {
 pub mod perlin {
     use rand::{Rng, random};
 
-    use crate::types::vec3::Point;
+    use crate::types::vec3::{Point, Vec3};
 
     const POINT_COUNT: usize = 256;
 
@@ -236,22 +236,22 @@ pub mod perlin {
         perm_x: [i32; POINT_COUNT],
         perm_y: [i32; POINT_COUNT],
         perm_z: [i32; POINT_COUNT],
-        ranfloat: [f64; POINT_COUNT],
+        ranvec: [Vec3; POINT_COUNT]
     }
 
     impl Perlin {
 
         pub fn new() -> Perlin {
-            let mut ranfloat = [0.0; POINT_COUNT];
+            let mut ranvec = [Vec3(0.0, 0.0, 0.0); POINT_COUNT];
             for i in 0..POINT_COUNT {
-                ranfloat[i] = random();
+                ranvec[i] = Vec3::normalized(Vec3::random_vec_bounded(-1.0, 1.0));
             }
 
             Perlin { 
                 perm_x: Perlin::generate_perm(), 
                 perm_y: Perlin::generate_perm(), 
-                perm_z: Perlin::generate_perm(), 
-                ranfloat
+                perm_z: Perlin::generate_perm(),
+                ranvec
             }
         }
 
@@ -260,19 +260,15 @@ pub mod perlin {
             let v = p.y() - p.y().floor();
             let w = p.z() - p.z().floor();
 
-            let u = u * u * (3.0 - 2.0 * u);
-            let v = v * v * (3.0 - 2.0 * v);
-            let w = w * w * (3.0 - 2.0 * w);
-
             let i = p.x().floor() as i32;
             let j = p.y().floor() as i32;
             let k = p.z().floor() as i32;
 
-            let mut c = [[[0.0; 2]; 2]; 2];
+            let mut c = [[[Vec3(0.0, 0.0, 0.0); 2]; 2]; 2];
             for di in 0..2 {
                 for dj in 0..2 {
                     for dk in 0..2 {
-                        c[di][dj][dk] = self.ranfloat[
+                        c[di][dj][dk] = self.ranvec[
                             (self.perm_x[((i + di as i32) & 255) as usize] ^
                             self.perm_y[((j + dj as i32) & 255) as usize] ^
                             self.perm_z[((k + dk as i32) & 255) as usize]) as usize
@@ -281,21 +277,26 @@ pub mod perlin {
                 }
             }
             
-            Perlin::trilinear_interp(c, u, v, w)
+            Perlin::perlin_interp(c, u, v, w)
         }
 
-        fn trilinear_interp(c: [[[f64; 2]; 2]; 2], u: f64, v: f64, w: f64) -> f64 {
+        fn perlin_interp(c: [[[Vec3; 2]; 2]; 2], u: f64, v: f64, w: f64) -> f64 {
             let mut accum = 0.0;
+            let uu = u * u * (3.0 - 2.0 * u);
+            let vv = v * v * (3.0 - 2.0 * v);
+            let ww = w * w * (3.0 - 2.0 * w);
+
             for i in 0..2 {
                 for j in 0..2 {
                     for k in 0..2 {
                         let i = i as f64;
                         let j = j as f64;
                         let k = k as f64;
-                        accum += (i * u + (1.0 - i) * (1.0 - u)) *
-                                 (j * v + (1.0 - j) * (1.0 - v)) *
-                                 (k * w + (1.0 - k) * (1.0 - w)) *
-                                 c[i as usize][j as usize][k as usize];
+                        let weight_vec = Vec3(u - i, v - j, w - k);
+                        accum += (i * uu + (1.0 - i) * (1.0 - uu)) *
+                                 (j * vv + (1.0 - j) * (1.0 - vv)) *
+                                 (k * ww + (1.0 - k) * (1.0 - ww)) *
+                                 Vec3::dot(c[i as usize][j as usize][k as usize], weight_vec)
                     }
                 }
             }
