@@ -16,6 +16,7 @@ use crate::hittables::aarect::XZ;
 use crate::hittables::aarect::YZ;
 use crate::hittables::block::Block;
 use crate::hittables::hittable_list::HittableList;
+use crate::hittables::instance::Instance;
 use crate::hittables::moving_sphere::MovingSphere;
 use crate::scene::Scene;
 use crate::types::texture::CheckerTexture;
@@ -23,6 +24,8 @@ use crate::types::texture::ImageTexture;
 use crate::types::texture::NoiseTexture;
 use crate::types::texture::SolidColor;
 use crate::types::texture::Texture;
+use crate::types::transform::Transform;
+use crate::types::transform::TransformData;
 
 pub fn degrees_to_radians(deg: f64) -> f64 {
     2.0 * PI * deg / 360.0
@@ -49,7 +52,8 @@ pub enum PresetScene {
     TwoPerlinSpheres,
     Earth,
     SimpleLight,
-    CornellBox
+    CornellBox,
+    TransformTest
 }
 
 impl PresetScene {
@@ -60,7 +64,8 @@ impl PresetScene {
             PresetScene::TwoPerlinSpheres => two_perlin_spheres(samples_per_pixel),
             PresetScene::Earth => earth(samples_per_pixel),
             PresetScene::SimpleLight => simple_light(samples_per_pixel),
-            PresetScene::CornellBox => cornell_box(samples_per_pixel)
+            PresetScene::CornellBox => cornell_box(samples_per_pixel),
+            PresetScene::TransformTest => transform_test(samples_per_pixel)
         }
     }
 }
@@ -442,6 +447,33 @@ pub fn cornell_box(samples_per_pixel: u32) -> Scene {
         samples_per_pixel,
         background: Background::SolidColor(Vec3(0.0, 0.0, 0.0))
     }
+}
+
+pub fn transform_test(samples_per_pixel: u32) -> Scene {
+    let green = Lambertian {
+        albedo: Arc::new(SolidColor::from(Vec3(0.12, 0.45, 0.15)))
+    };
+
+    let block0 = Block::new(
+        Vec3(-1.0, -1.0, -1.0),
+        Vec3(1.0, 1.0, 1.0),
+        green.clone()
+    );
+
+    let block1 = Block::new(
+        Vec3(-1.0, -1.0, -1.0),
+        Vec3(1.0, 1.0, 1.0),
+        green.clone()
+    );
+
+    let transformed_block = Instance::new(Box::new(block1), 
+    TransformData::identity().translate(Vec3(-3.0, 0.0, 0.0)));
+
+    let world = hittable_list!(
+        Box::new(block0),
+        Box::new(transformed_block)
+    );
+    diagonal_view(samples_per_pixel, world)
 }
 
 pub mod perlin {
