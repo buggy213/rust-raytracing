@@ -34,9 +34,9 @@ impl AABB {
                 f64::min(a.minimum.2, b.minimum.2)
             ), 
             maximum: Vec3(
-                f64::max(a.minimum.0, b.minimum.0),
-                f64::max(a.minimum.1, b.minimum.1),
-                f64::max(a.minimum.2, b.minimum.2)
+                f64::max(a.maximum.0, b.maximum.0),
+                f64::max(a.maximum.1, b.maximum.1),
+                f64::max(a.maximum.2, b.maximum.2)
             ) 
         }
     }

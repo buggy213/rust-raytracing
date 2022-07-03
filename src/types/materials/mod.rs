@@ -19,6 +19,9 @@ pub enum Material {
     },
     DiffuseLight {
         emit: Arc<dyn Texture>
+    },
+    Isotropic {
+        albedo: Arc<dyn Texture>
     }
 }
 
@@ -67,7 +70,16 @@ impl Material {
                 let scattered = Ray { origin: record.p, direction: direction, ..ray_in };
                 Some((Vec3(1.0, 1.0, 1.0), scattered))
             },
-            Material::DiffuseLight { emit } => {
+            Material::Isotropic { albedo } => {
+                let scattered = Ray {
+                    origin: record.p,
+                    direction: Vec3::random_in_unit_sphere(),
+                    time: ray_in.time
+                };
+                let attenuation = albedo.value(record.u, record.v, record.p);
+                Some((attenuation, scattered))
+            },
+            _ => {
                 None
             }
         }

@@ -21,7 +21,7 @@ pub enum BVHNode {
 }
 
 impl BVHNode {
-    fn make(mut objects: Vec<Box<dyn Hittable>>, t0: f64, t1: f64) -> BVHNode {
+    pub fn make(mut objects: Vec<Box<dyn Hittable>>, t0: f64, t1: f64) -> BVHNode {
         let comparator = match rand::thread_rng().gen_range(0..3) {
             0 => |a: AABB, b: AABB| if a.minimum.0 < b.minimum.0 { Ordering::Less } else { Ordering::Greater },
             1 => |a: AABB, b: AABB| if a.minimum.1 < b.minimum.1 { Ordering::Less } else { Ordering::Greater },

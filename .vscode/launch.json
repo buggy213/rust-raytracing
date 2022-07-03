@@ -25,6 +25,24 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug executable 'raytrace' (final render)",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=raytrace",
+                    "--package=raytrace"
+                ],
+                "filter": {
+                    "name": "raytrace",
+                    "kind": "bin"
+                }
+            },
+            "args": ["-s", "1", "-o", "output.png", "--scene", "final-render"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug executable 'raytrace' (Earth scene)",
             "cargo": {
                 "args": [
