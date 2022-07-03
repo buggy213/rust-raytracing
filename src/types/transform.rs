@@ -73,14 +73,14 @@ impl TransformData {
     }
 
     pub fn translate(&self, translation: Vec3) -> TransformData {
-        let mut eye = TransformData::identity();
-        eye.data[0][3] = translation.0;
-        eye.data[1][3] = translation.1;
-        eye.data[2][3] = translation.2;
-        eye.inverse[0][3] = -translation.0;
-        eye.inverse[1][3] = -translation.1;
-        eye.inverse[2][3] = -translation.2;
-        eye
+        let mut translation_matrix = TransformData::identity();
+        translation_matrix.data[0][3] = translation.0;
+        translation_matrix.data[1][3] = translation.1;
+        translation_matrix.data[2][3] = translation.2;
+        translation_matrix.inverse[0][3] = -translation.0;
+        translation_matrix.inverse[1][3] = -translation.1;
+        translation_matrix.inverse[2][3] = -translation.2;
+        self.compose(translation_matrix)
     }
 
     pub fn rotate_euler(&self, rotation: Vec3) -> TransformData {
@@ -183,12 +183,16 @@ impl InverseTransform<Vec3> for Vec3 {
 
 impl Transform<Ray> for Ray {
     fn transform(&self, transform: TransformData) -> Ray {
-        Ray { origin: self.origin.transform(transform), direction: self.direction.transform(transform), time: self.time }
+        let transformed_origin = self.origin.transform(transform);
+        let transformed_direction = (self.origin + self.direction).transform(transform) - transformed_origin;
+        Ray { origin: transformed_origin, direction: transformed_direction, time: self.time }
     }
 }
 
 impl InverseTransform<Ray> for Ray {
     fn inverse_transform(&self, transform: TransformData) -> Ray {
-        Ray { origin: self.origin.inverse_transform(transform), direction: self.direction.inverse_transform(transform), time: self.time }
+        let transformed_origin = self.origin.inverse_transform(transform);
+        let transformed_direction = (self.origin + self.direction).inverse_transform(transform) - transformed_origin;
+        Ray { origin: transformed_origin, direction: transformed_direction, time: self.time }
     }
 }

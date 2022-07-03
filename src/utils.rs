@@ -398,14 +398,29 @@ pub fn cornell_box(samples_per_pixel: u32) -> Scene {
     };
 
     let block0 = Block::new(
-        Vec3(130.0, 0.0, 65.0),
-        Vec3(295.0, 165.0, 230.0),
+        Vec3(0.0, 0.0, 0.0),
+        Vec3(165.0, 330.0, 165.0),
         white.clone()
     );
     let block1 = Block::new(
-        Vec3(265.0, 0.0, 295.0),
-        Vec3(430.0, 330.0, 460.0),
+        Vec3(0.0, 0.0, 0.0),
+        Vec3(165.0, 165.0, 165.0),
         white.clone()
+    );
+
+    let block0 = Instance::new(
+        Box::new(block0),
+        TransformData::identity()
+                                 .rotate_angle_axis(Vec3(0.0, 1.0, 0.0), degrees_to_radians(15.0))
+                                 .translate(Vec3(265.0, 0.0, 295.0))
+    );
+
+    let block1 = Instance::new(
+        Box::new(block1),
+        TransformData::identity()
+                                 .rotate_angle_axis(Vec3(0.0, 1.0, 0.0), degrees_to_radians(-18.0))
+                                 .translate(Vec3(130.0, 0.0, 65.0))
+                                 
     );
 
     let world = hittable_list!(
@@ -450,30 +465,120 @@ pub fn cornell_box(samples_per_pixel: u32) -> Scene {
 }
 
 pub fn transform_test(samples_per_pixel: u32) -> Scene {
+    let red = Lambertian {
+        albedo: Arc::new(SolidColor::from(Vec3(0.65, 0.05, 0.05)))
+    };
+
+    let white_material = Arc::new(SolidColor::from(Vec3(0.73, 0.73, 0.73)));
+    let white = Lambertian {
+        albedo: white_material
+    };
     let green = Lambertian {
         albedo: Arc::new(SolidColor::from(Vec3(0.12, 0.45, 0.15)))
     };
+    let light = DiffuseLight {
+        emit: Arc::new(SolidColor::from(Vec3(15.0, 15.0, 15.0)))
+    };
+
+    let wall0 = YZ {
+        a0: 0.0,
+        a1: 555.0,
+        b0: 0.0,
+        b1: 555.0,
+        k: 555.0,
+        material: green
+    };
+    let wall1 = YZ {
+        a0: 0.0,
+        a1: 555.0,
+        b0: 0.0,
+        b1: 555.0,
+        k: 0.0,
+        material: red
+    };
+    let wall2 = XZ {
+        a0: 163.0,
+        a1: 393.0,
+        b0: 177.0,
+        b1: 382.0,
+        k: 554.0,
+        material: light
+    };
+    let wall3 = XZ {
+        a0: 0.0,
+        a1: 555.0,
+        b0: 0.0,
+        b1: 555.0,
+        k: 0.0,
+        material: white.clone()
+    };
+    let wall4 = XZ {
+        a0: 0.0,
+        a1: 555.0,
+        b0: 0.0,
+        b1: 555.0,
+        k: 555.0,
+        material: white.clone()
+    };
+    let wall5 = XY {
+        a0: 0.0,
+        a1: 555.0,
+        b0: 0.0,
+        b1: 555.0,
+        k: 555.0,
+        material: white.clone()
+    };
 
     let block0 = Block::new(
-        Vec3(-1.0, -1.0, -1.0),
-        Vec3(1.0, 1.0, 1.0),
-        green.clone()
+        Vec3(0.0, 0.0, 0.0),
+        Vec3(165.0, 330.0, 165.0),
+        white.clone()
     );
 
-    let block1 = Block::new(
-        Vec3(-1.0, -1.0, -1.0),
-        Vec3(1.0, 1.0, 1.0),
-        green.clone()
+    let block0 = Instance::new(
+        Box::new(block0),
+        TransformData::identity().translate(Vec3(265.0, 0.0, 295.0))
+                                            .rotate_angle_axis(Vec3(0.0, 1.0, 0.0), degrees_to_radians(15.0))
     );
-
-    let transformed_block = Instance::new(Box::new(block1), 
-    TransformData::identity().translate(Vec3(-3.0, 0.0, 0.0)));
 
     let world = hittable_list!(
-        Box::new(block0),
-        Box::new(transformed_block)
+        Box::new(wall0), 
+        Box::new(wall1), 
+        Box::new(wall2), 
+        Box::new(wall3), 
+        Box::new(wall4), 
+        Box::new(wall5),
+        Box::new(block0)
     );
-    diagonal_view(samples_per_pixel, world)
+
+    pub const ASPECT_RATIO: f64 = 1.0;
+    const IMAGE_WIDTH: u32 = 600;
+    const IMAGE_HEIGHT: u32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u32;
+
+    let look_from = Vec3(278.0, 278.0, -800.0);
+    let look_at = Vec3(278.0, 278.0, 0.0);
+    let focus_dist = 10.0;
+    let camera = Camera::custom(
+        look_from,
+        look_at,
+        Vec3(0.0, 1.0, 0.0), 
+        ASPECT_RATIO, 
+        40.0,
+        0.0,
+        focus_dist,
+        0.0,
+        0.0
+    );
+    
+    Scene { 
+        camera, 
+        world, 
+        aspect_ratio: ASPECT_RATIO, 
+        height: IMAGE_HEIGHT, 
+        width: IMAGE_WIDTH, 
+        samples_per_pixel,
+        background: Background::SolidColor(Vec3(0.0, 0.0, 0.0))
+    }
 }
 
 pub mod perlin {

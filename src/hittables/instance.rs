@@ -34,9 +34,11 @@ impl Hittable for Instance {
     fn hit(&self, r: Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let transformed_ray = r.inverse_transform(self.transform);
         if let Some(hitrecord) = self.object.hit(transformed_ray, t_min, t_max) {
+            let transformed_p = hitrecord.p.transform(self.transform);
+            let transformed_normal = (hitrecord.p + hitrecord.normal).transform(self.transform) - transformed_p;
             Some(HitRecord::construct(
-                hitrecord.p.transform(self.transform),
-                hitrecord.normal.transform(self.transform),
+                transformed_p,
+                transformed_normal,
                 hitrecord.t,
                 r,
                 hitrecord.material,
