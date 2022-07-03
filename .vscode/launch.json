@@ -61,6 +61,24 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug executable 'raytrace' (Earth scene, multithreaded)",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=raytrace",
+                    "--package=raytrace"
+                ],
+                "filter": {
+                    "name": "raytrace",
+                    "kind": "bin"
+                }
+            },
+            "args": ["-s", "256", "-m", "-o", "output.ppm", "--scene", "earth"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug unit tests in executable 'raytrace'",
             "cargo": {
                 "args": [
@@ -92,7 +110,7 @@
                     "kind": "bin"
                 }
             },
-            "args": ["-s", "16", "-m", "-o", "output.ppm"],
+            "args": ["-s", "16", "-m", "-o", "output.png", "--scene", "jumping-balls"],
             "cwd": "${workspaceFolder}"
         }
     ]
