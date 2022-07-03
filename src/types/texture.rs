@@ -1,4 +1,4 @@
-use image::{io::Reader as ImageReader, DynamicImage, Rgb, GenericImageView};
+use image::{io::Reader as ImageReader, DynamicImage, GenericImageView};
 
 use crate::utils::{perlin::Perlin};
 

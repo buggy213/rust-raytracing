@@ -1,4 +1,4 @@
-use std::{io::{Write, Seek, BufWriter, Cursor}, path::Path};
+use std::{io::{Write}, path::Path};
 
 use crate::{hittables::hittable_list::HittableList, camera::Camera, types::color::Color, Background};
 

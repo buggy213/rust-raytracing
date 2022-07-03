@@ -1,5 +1,5 @@
 use super::{hittable_list::HittableList, hittable::{Hittable, HitRecord}, aarect::{XY, XZ, YZ}};
-use crate::{types::{vec3::{Vec3, Point}, ray::Ray, aabb::AABB, materials::Material}, hittable_list};
+use crate::{types::{vec3::{Point}, ray::Ray, aabb::AABB, materials::Material}, hittable_list};
 pub struct Block {
     min: Point,
     max: Point,

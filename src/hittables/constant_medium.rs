@@ -2,7 +2,7 @@ use std::{sync::Arc, f64::{INFINITY, consts::E}};
 
 use rand::random;
 
-use crate::types::{materials::Material, texture::{Texture, SolidColor}, color::Color, aabb::AABB, ray::{Ray, self}, vec3::Vec3};
+use crate::types::{materials::Material, texture::{Texture, SolidColor}, color::Color, aabb::AABB, ray::{Ray}, vec3::Vec3};
 
 use super::hittable::{Hittable, HitRecord};
 
