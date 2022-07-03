@@ -3,6 +3,7 @@ mod hittables;
 mod utils;
 mod camera;
 mod scene;
+mod preset_scenes;
 
 use std::fs::File;
 use std::io;
@@ -14,14 +15,11 @@ use clap::Parser;
 use hittables::hittable::Hittable;
 use rand::random;
 use scene::Scene;
-use types::texture::SolidColor;
 use types::vec3::{Vec3};
 use types::color::Color;
 use types::ray::Ray;
 use types::materials::Material::{self};
-use utils::PresetScene;
-use crate::hittables::sphere::Sphere;
-use crate::types::color;
+use preset_scenes::PresetScene;
 
 #[derive(Debug)]
 pub enum Background {
