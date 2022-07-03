@@ -1,5 +1,3 @@
-use std::{io, fmt::format};
-
 use image::{io::Reader as ImageReader, DynamicImage, Rgb, GenericImageView};
 
 use crate::utils::{perlin::Perlin};

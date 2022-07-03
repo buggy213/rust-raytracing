@@ -154,8 +154,15 @@ fn main() {
     }
 
     if let Some(filename) = output_file {
-        let file = File::create(Path::new(&filename)).expect("unable to create file");
-        scene.print_ppm(&color_data, file).expect("failed to print output");
+        let path = Path::new(&filename);
+        
+        match filename.split('.').last().unwrap() {
+            "png" => scene.save_png(&color_data, path),
+            "ppm" | _ => {
+                let file = File::create(path).expect("unable to create file");
+                scene.print_ppm(&color_data, file).expect("failed to print output")
+            }
+        }
     }
     else {
         scene.print_ppm(&color_data, io::stdout()).expect("failed to print output");

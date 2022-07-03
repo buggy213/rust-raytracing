@@ -1,4 +1,4 @@
-use std::io::Write;
+use std::{io::{Write, Seek, BufWriter, Cursor}, path::Path};
 
 use crate::{hittables::hittable_list::HittableList, camera::Camera, types::color::Color, Background};
 
@@ -26,5 +26,21 @@ impl Scene {
         }
 
         Ok(())
+    }
+
+    pub fn save_png(&self, color_data: &Vec<Color>, output: &Path) {
+        let buf: Vec<u8> = color_data.iter().flat_map(|x| {
+            [(x.0.sqrt().clamp(0.0, 1.0) * 256.0) as u8, 
+             (x.1.sqrt().clamp(0.0, 1.0) * 256.0) as u8, 
+             (x.2.sqrt().clamp(0.0, 1.0) * 256.0) as u8]
+        }).collect();
+        image::save_buffer_with_format(
+            output, 
+            buf.as_slice(),
+            self.width, 
+            self.height, 
+            image::ColorType::Rgb8, 
+            image::ImageFormat::Png
+        ).expect("failed to write png");
     }
 }

@@ -5,3 +5,4 @@ pub mod materials;
 pub mod aabb;
 pub mod bvh;
 pub mod texture;
+pub mod transform;

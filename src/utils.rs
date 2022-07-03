@@ -14,6 +14,7 @@ use crate::hittable_list;
 use crate::hittables::aarect::XY;
 use crate::hittables::aarect::XZ;
 use crate::hittables::aarect::YZ;
+use crate::hittables::block::Block;
 use crate::hittables::hittable_list::HittableList;
 use crate::hittables::moving_sphere::MovingSphere;
 use crate::scene::Scene;
@@ -388,10 +389,30 @@ pub fn cornell_box(samples_per_pixel: u32) -> Scene {
         b0: 0.0,
         b1: 555.0,
         k: 555.0,
-        material: white
+        material: white.clone()
     };
 
-    let world = hittable_list!(Box::new(wall0), Box::new(wall1), Box::new(wall2), Box::new(wall3), Box::new(wall4), Box::new(wall5));
+    let block0 = Block::new(
+        Vec3(130.0, 0.0, 65.0),
+        Vec3(295.0, 165.0, 230.0),
+        white.clone()
+    );
+    let block1 = Block::new(
+        Vec3(265.0, 0.0, 295.0),
+        Vec3(430.0, 330.0, 460.0),
+        white.clone()
+    );
+
+    let world = hittable_list!(
+        Box::new(wall0), 
+        Box::new(wall1), 
+        Box::new(wall2), 
+        Box::new(wall3), 
+        Box::new(wall4), 
+        Box::new(wall5),
+        Box::new(block0),
+        Box::new(block1)
+    );
 
     pub const ASPECT_RATIO: f64 = 1.0;
     const IMAGE_WIDTH: u32 = 600;
