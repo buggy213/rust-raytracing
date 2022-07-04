@@ -26,7 +26,7 @@ pub struct MultithreadedSettings {
     pub tile_size: u32
 }
 
-#[derive(Debug, Clone, ArgEnum)]
+#[derive(Debug, Clone, ArgEnum, PartialEq)]
 pub enum RenderStrategy {
     ProgressiveAverage,
     TileFull,

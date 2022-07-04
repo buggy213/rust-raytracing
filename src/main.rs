@@ -202,9 +202,19 @@ fn main() {
             for i in 0..horizontal_tiles {
                 for _ in 0..jobs_per_tile {
                     jobs.push(RenderJobMessage {
-                        top_right: Pixel { 
-                            x: u32::min((i + 1) * tile_size, scene.width), 
-                            y: u32::min((j + 1) * tile_size, scene.height) 
+                        
+                        
+                        top_right: if render_strategy == RenderStrategy::ProgressiveAverage {
+                            Pixel {
+                                x: scene.width,
+                                y: scene.height
+                            }
+                        }
+                        else {
+                            Pixel { 
+                                x: u32::min((i + 1) * tile_size, scene.width), 
+                                y: u32::min((j + 1) * tile_size, scene.height) 
+                            }
                         },
                         bottom_left: Pixel { x: i * tile_size, y: j * tile_size },
                         samples_per_pixel
@@ -240,7 +250,7 @@ fn main() {
         for (i, job) in jobs.iter().enumerate() {
             children[i % children.len()].send_job.send(*job).expect("failed to assign job");
         }
-
+        
         const POLLING_INTERVAL: u64 = 1; // 100ms polling interval
         let mut completed_threads = 0;
         while completed_threads < children.len() {
