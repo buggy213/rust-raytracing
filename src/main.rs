@@ -9,9 +9,9 @@ mod cli;
 use std::fs::File;
 use std::io;
 use std::path::Path;
-use std::sync::mpsc::{Sender, Receiver, TryRecvError};
+use std::sync::mpsc::{Sender, Receiver};
 use std::sync::{Arc, mpsc};
-use std::thread::{self, JoinHandle, sleep, sleep_ms};
+use std::thread::{self, JoinHandle, sleep};
 use std::time::Duration;
 
 use clap::Parser;
