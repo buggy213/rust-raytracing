@@ -191,7 +191,7 @@ fn straight_view(samples_per_pixel: u32, world: HittableList) -> Scene {
     const IMAGE_WIDTH: u32 = 400;
     const IMAGE_HEIGHT: u32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u32;
     
-    let look_from = Vec3(0.0, 0.0, -20.0);
+    let look_from = Vec3(0.0, 0.0, 30.0);
     let look_at = Vec3(0.0, 0.0, 0.0);
     let focus_dist = 10.0;
     let camera = Camera::custom(
@@ -881,9 +881,9 @@ pub fn triangle_test(samples_per_pixel: u32) -> Scene {
     let tri_mat = Material::Lambertian { albedo: Arc::new(noise) };
 
     let triangle = Triangle::new(
-        Vec3(0.0, 5.0, 0.0),
+        Vec3(0.0, 0.0, 0.0),
         Vec3(5.0, 0.0, 0.0),
-        Vec3(0.0, 0.0, 5.0),
+        Vec3(0.0, 5.0, 0.0),
         tri_mat
     );
 

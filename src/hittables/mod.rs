@@ -7,3 +7,4 @@ pub mod block;
 pub mod instance;
 pub mod constant_medium;
 pub mod tri;
+pub mod mesh;

@@ -40,17 +40,17 @@ impl Hit for Triangle {
         let P = Vec3::cross(r.direction, e2);
         let denom = Vec3::dot(P, e1);
 
-        if f64::abs(denom) < EPSILON {
+        if denom < EPSILON && denom > -EPSILON{
             return None;
         }
 
-        let T = self.v0 - r.origin;
+        let T = r.origin - self.v0;
 
         let u = Vec3::dot(P, T) / denom;
         if u < 0.0 || u > 1.0 {
             return None;
         }
-
+        
         let Q = Vec3::cross(T, e1);
         let v = Vec3::dot(Q, r.direction) / denom;
         if v < 0.0 || u + v > 1.0 {
@@ -62,7 +62,7 @@ impl Hit for Triangle {
             return None;
         }
 
-        let normal = Vec3::cross(e1, e2);
+        let normal = Vec3::normalized(Vec3::cross(e1, e2));
 
         Some(HitRecord::construct(
             r.at(t), 
