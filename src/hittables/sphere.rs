@@ -1,6 +1,6 @@
 use std::f64::consts::PI;
 
-use super::hittable::Hittable;
+use super::hittable::Hit;
 use crate::types::materials::Material;
 use crate::types::ray::Ray;
 use crate::types::vec3::Point;
@@ -16,8 +16,16 @@ pub struct Sphere {
 }
 
 impl Sphere {
-    /// Returns an Option<(f64, Vec3)> containing the outward facing normal and length along ray if the ray hit a sphere, and None otherwise
+    pub fn new(center: Point, radius: f64, material: Material) -> Sphere {
+        Sphere {
+            center, radius, material
+        }
+    }
+
+    /// Returns an Option<(f64, Vec3)> containing the outward facing normal and length along ray if the ray hit a sphere, 
+    /// and None otherwise
     pub fn hit_sphere(center: Vec3, radius: f64, ray: Ray, t_min: f64, t_max: f64) -> Option<(f64, Vec3)> {
+        // ray-sphere intersection is well documented problem, this is a simple implementation
         let oc: Vec3 = ray.origin - center;
         let a = ray.direction.square_magnitude();
         let half_b = Vec3::dot(oc, ray.direction);
@@ -50,7 +58,8 @@ impl Sphere {
     }
 }
 
-impl Hittable for Sphere {
+impl Hit for Sphere {
+    /// Calculates a ray-sphere intersection
     fn hit(&self, ray: Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         if let Some((root, outward_normal)) = Sphere::hit_sphere(self.center, self.radius, ray, t_min, t_max) {
             let (u, v) = Sphere::get_sphere_uv(outward_normal);
@@ -62,6 +71,7 @@ impl Hittable for Sphere {
         }
     }
 
+    /// Returns a bounding box around the sphere
     fn bounding_box(&self, _t0: f64, _t1: f64) -> Option<AABB> {
         let r = Vec3(self.radius, self.radius, self.radius);
         Some(AABB::new(self.center - r, self.center + r))

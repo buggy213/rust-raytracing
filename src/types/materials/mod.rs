@@ -1,10 +1,21 @@
-use std::{sync::Arc};
+use std::{
+    sync::Arc
+};
 
 use rand::random;
 
 use crate::hittables::hittable::HitRecord;
 
-use super::{ray::Ray, color::Color, vec3::{Vec3, Point}, texture::Texture};
+use super::{
+    ray::Ray, 
+    color::Color, 
+    vec3::{
+        Vec3, 
+        Point
+    }, 
+    texture::Texture
+};
+
 #[derive(Clone)]
 pub enum Material {
     Lambertian {

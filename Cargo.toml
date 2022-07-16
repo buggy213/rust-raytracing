@@ -12,6 +12,3 @@ clap = { version = "3.2.8", features = ["derive"] }
 num_cpus = "1.13.1"
 itertools = "0.10.2"
 image = "0.24.2"
-
-egui = "0.18.1"
-glium = "0.31.0"

@@ -1,4 +1,7 @@
-use super::{vec3::Vec3, ray::Ray};
+use super::{
+    vec3::Vec3, 
+    ray::Ray
+};
 
 /// Axis-aligned bounding box
 /// Defined by 2 points
@@ -12,7 +15,7 @@ impl AABB {
     pub fn new(minimum: Vec3, maximum: Vec3) -> AABB {
         AABB { minimum, maximum }
     }
-
+    
     fn check_slab(min: f64, max: f64, ray_origin: f64, ray_dir: f64, t_min: f64, t_max: f64) -> bool {
         let x = (min - ray_origin) / ray_dir;
         let y =  (max - ray_origin) / ray_dir;

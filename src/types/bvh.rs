@@ -2,7 +2,7 @@ use std::{cmp::Ordering, mem::swap};
 
 use rand::Rng;
 
-use crate::hittables::hittable::{Hittable, HitRecord};
+use crate::hittables::hittable::{Hit, HitRecord};
 
 use super::{aabb::AABB, ray::Ray};
 
@@ -10,18 +10,18 @@ use super::{aabb::AABB, ray::Ray};
 
 pub enum BVHNode {
     Leaf {
-        val: Box<dyn Hittable>,
+        val: Box<dyn Hit>,
         bounding_box: AABB
     },
     Branch {
-        left: Box<dyn Hittable>,
-        right: Box<dyn Hittable>,
+        left: Box<dyn Hit>,
+        right: Box<dyn Hit>,
         bounding_box: AABB
     }
 }
 
 impl BVHNode {
-    pub fn make(mut objects: Vec<Box<dyn Hittable>>, t0: f64, t1: f64) -> BVHNode {
+    pub fn make(mut objects: Vec<Box<dyn Hit>>, t0: f64, t1: f64) -> BVHNode {
         let comparator = match rand::thread_rng().gen_range(0..3) {
             0 => |a: AABB, b: AABB| if a.minimum.0 < b.minimum.0 { Ordering::Less } else { Ordering::Greater },
             1 => |a: AABB, b: AABB| if a.minimum.1 < b.minimum.1 { Ordering::Less } else { Ordering::Greater },
@@ -83,7 +83,7 @@ impl BVHNode {
     }
 }
 
-impl Hittable for BVHNode {
+impl Hit for BVHNode {
     fn hit(&self, r: Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         match self {
             Self::Leaf { val, bounding_box } => {

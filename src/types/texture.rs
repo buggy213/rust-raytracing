@@ -2,7 +2,7 @@ use image::{io::Reader as ImageReader, DynamicImage, GenericImageView};
 
 use crate::utils::{perlin::Perlin};
 
-use super::{vec3::{Point, Vec3}, color::Color};
+use super::{vec3::{Point, Vec3}, color::{Color, self}};
 
 pub trait Texture: Send + Sync {
     fn value(&self, u: f64, v: f64, p: Point) -> Color;
@@ -54,7 +54,10 @@ pub struct NoiseTexture {
 
 impl Texture for NoiseTexture {
     fn value(&self, _u: f64, _v: f64, p: Point) -> Color {
-        Vec3(1.0, 1.0, 1.0) * 0.5 * (1.0 + f64::sin(self.scale * p.z() + 10.0 * self.noise.turbulence(p, 7)))
+        let color_vector = 
+            Vec3(1.0, 1.0, 1.0) * 0.5 
+            * (1.0 + f64::sin(self.scale * p.z() + 10.0 * self.noise.turbulence(p, 7)));
+        color_vector
     }
 }
 
@@ -71,7 +74,7 @@ pub struct ImageTexture {
 }
 
 impl Texture for ImageTexture {
-    fn value(&self, u: f64, v: f64, p: Point) -> Color {
+    fn value(&self, u: f64, v: f64, _p: Point) -> Color {
         let u = u.clamp(0.0, 1.0);
         
         // image coordinates have origin at top left, we have origin at bottom left

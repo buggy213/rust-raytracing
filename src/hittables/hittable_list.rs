@@ -1,12 +1,21 @@
 use std::fmt::Debug;
 
-use crate::types::{ray::Ray, aabb::AABB};
-use super::hittable::{Hittable, HitRecord};
+use crate::types::{
+    ray::Ray, 
+    aabb::AABB
+};
+use super::hittable::{
+    Hit, 
+    HitRecord
+};
 
+/// A collection of hittable objects
 pub struct HittableList {
-    pub objects: Vec<Box<dyn Hittable>>
+    objects: Vec<Box<dyn Hit>>
 }
 
+/// Dummy implementation of Debug for HittableList
+/// TODO: actually provide helpful debug information
 impl Debug for HittableList {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("HittableList"))
@@ -14,23 +23,34 @@ impl Debug for HittableList {
 }
 
 #[macro_export]
+/// Convenience macro to create a HittableList from hittables
 macro_rules! hittable_list {
     ( $( $a:expr ), * ) => {
-        HittableList { objects: vec![$($a, )*] }
+        HittableList::from_vec(vec![$($a, )*])
     }
 }
 
 impl HittableList {
+    /// Creates a empty HittableList
     pub fn new() -> HittableList {
         HittableList { objects: Vec::new() }
-    }   
+    }
 
-    pub fn add(&mut self, x: Box<dyn Hittable>) {
+    /// Creates a HittableList and populates it with some objects - primarily used by 
+    /// `hittable_list` macro
+    pub fn from_vec(vec: Vec<Box<dyn Hit>>) -> HittableList {
+        HittableList { objects: vec }
+    }
+
+    /// Add a Hittable object to this HittableList
+    pub fn add(&mut self, x: Box<dyn Hit>) {
         self.objects.push(x);
     }
 }
 
-impl Hittable for HittableList {
+impl Hit for HittableList {
+    /// Checks every object in HittableList, then returns the HitRecord from
+    /// the one that was hit first (or None if nothing was hit)
     fn hit(&self, r: Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let mut return_value: Option<HitRecord> = None;
         let mut closest_so_far = t_max;
@@ -44,6 +64,7 @@ impl Hittable for HittableList {
         return_value
     }
 
+    /// Create a bounding box encompassing every object in this HittableList
     fn bounding_box(&self, t0: f64, t1: f64) -> Option<AABB> {
         if self.objects.is_empty() {
             return None;

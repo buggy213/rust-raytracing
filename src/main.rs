@@ -15,7 +15,7 @@ use std::thread::{self, JoinHandle, sleep};
 use std::time::Duration;
 
 use clap::Parser;
-use hittables::hittable::Hittable;
+use hittables::hittable::Hit;
 use rand::random;
 use scene::Scene;
 use types::vec3::{Vec3};
@@ -49,7 +49,7 @@ impl Background {
     }
 }
 
-fn ray_color(r: Ray, world: &dyn Hittable, depth: u32, background: &Background) -> Color {
+fn ray_color(r: Ray, world: &dyn Hit, depth: u32, background: &Background) -> Color {
     if depth <= 0 {
         return Vec3(0.0, 0.0, 0.0);
     }
