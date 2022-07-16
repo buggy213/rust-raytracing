@@ -1,8 +1,22 @@
-use image::{io::Reader as ImageReader, DynamicImage, GenericImageView};
+use image::{
+    io::Reader as ImageReader, 
+    DynamicImage, 
+    GenericImageView
+};
 
-use crate::utils::{perlin::Perlin};
+use crate::utils::{
+    perlin::Perlin
+};
 
-use super::{vec3::{Point, Vec3}, color::{Color, self}};
+use super::{
+    vec3::{
+        Point, 
+        Vec3
+    }, 
+    color::{
+        Color
+    }
+};
 
 pub trait Texture: Send + Sync {
     fn value(&self, u: f64, v: f64, p: Point) -> Color;

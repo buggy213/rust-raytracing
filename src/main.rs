@@ -9,21 +9,40 @@ mod cli;
 use std::fs::File;
 use std::io;
 use std::path::Path;
-use std::sync::mpsc::{Sender, Receiver};
-use std::sync::{Arc, mpsc};
-use std::thread::{self, JoinHandle, sleep};
+use std::sync::mpsc::{
+    Sender, 
+    Receiver
+};
+
+use std::sync::{
+    Arc, 
+    mpsc
+};
+use std::thread::{
+    self, 
+    JoinHandle, 
+    sleep
+};
 use std::time::Duration;
 
 use clap::Parser;
 use hittables::hittable::Hit;
 use rand::random;
 use scene::Scene;
-use types::vec3::{Vec3};
+use types::vec3::{
+    Vec3
+};
 use types::color::Color;
 use types::ray::Ray;
-use types::materials::Material::{self};
+use types::materials::Material::{
+    self
+};
 
-use crate::cli::{CliArguments, MultithreadedSettings, RenderStrategy};
+use crate::cli::{
+    CliArguments, 
+    MultithreadedSettings, 
+    RenderStrategy
+};
 
 #[derive(Debug)]
 pub enum Background {
@@ -168,7 +187,12 @@ fn main() {
 
         let cores = num_cpus::get() as u32;
 
-        let MultithreadedSettings { interactive, render_strategy, tile_size } = multithreaded_settings;
+        let MultithreadedSettings { 
+            interactive,
+            render_strategy,
+            tile_size 
+        } = multithreaded_settings;
+
         let horizontal_tiles;
         let vertical_tiles;
 
@@ -302,5 +326,3 @@ fn main() {
         scene.print_ppm(&color_data, io::stdout()).expect("failed to print output");
     }
 }
-
-

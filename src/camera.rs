@@ -1,4 +1,13 @@
-use crate::{types::{vec3::Vec3, ray::Ray}, utils::{degrees_to_radians, random_range}};
+use crate::{
+    types::{
+        vec3::Vec3, 
+        ray::Ray
+    }, 
+    utils::{
+        degrees_to_radians, 
+        random_range
+    }
+};
 #[derive(Debug)]
 pub struct Camera {
     origin: Vec3,

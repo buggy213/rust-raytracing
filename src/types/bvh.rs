@@ -36,22 +36,22 @@ impl BVHNode {
             }
         }
         else if objects.len() == 2 {
-            let mut a_AABB = objects[0].bounding_box(t0, t1).expect("objects in BVH must be boundable");
-            let mut b_AABB = objects[1].bounding_box(t0, t1).expect("objects in BVH must be boundable");
-            if comparator(a_AABB, b_AABB) == Ordering::Greater {
+            let mut a_aabb = objects[0].bounding_box(t0, t1).expect("objects in BVH must be boundable");
+            let mut b_aabb = objects[1].bounding_box(t0, t1).expect("objects in BVH must be boundable");
+            if comparator(a_aabb, b_aabb) == Ordering::Greater {
                 objects.swap(0, 1);
-                swap(&mut a_AABB, &mut b_AABB)
+                swap(&mut a_aabb, &mut b_aabb)
             }
             BVHNode::Branch { 
                 left: Box::new(BVHNode::Leaf {
                     val: objects.remove(0),
-                    bounding_box: a_AABB
+                    bounding_box: a_aabb
                 }),
                 right: Box::new(BVHNode::Leaf {
                     val: objects.remove(0), 
-                    bounding_box: b_AABB
+                    bounding_box: b_aabb
                 }),
-                bounding_box: AABB::surrounding_box(a_AABB, b_AABB)
+                bounding_box: AABB::surrounding_box(a_aabb, b_aabb)
             }
         }
         else {
