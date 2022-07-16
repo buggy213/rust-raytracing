@@ -34,7 +34,6 @@ pub mod perlin {
     }
 
     impl Perlin {
-
         pub fn new() -> Perlin {
             let mut ranvec = [Vec3(0.0, 0.0, 0.0); POINT_COUNT];
             for i in 0..POINT_COUNT {

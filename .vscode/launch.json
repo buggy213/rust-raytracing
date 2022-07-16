@@ -19,7 +19,7 @@
                     "kind": "bin"
                 }
             },
-            "args": ["-s", "1", "-o", "output.png", "--scene", "cornell-box"],
+            "args": ["-s", "32", "-o", "output.png", "--scene", "triangle-test"],
             "cwd": "${workspaceFolder}"
         },
         {
