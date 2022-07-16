@@ -1,12 +1,29 @@
-use crate::types::{transform::{TransformData, Transform, InverseTransform}, aabb::AABB, vec3::Vec3, ray::Ray};
+use crate::types::{
+    transform::{
+        TransformData, 
+        Transform, 
+        InverseTransform
+    }, 
+    aabb::AABB, 
+    vec3::Vec3, 
+    ray::Ray
+};
 
-use super::hittable::{Hittable, HitRecord};
+use super::hittable::{
+    Hit, 
+    HitRecord
+};
 
+/// Represents an "instance" of a different hittable - in other words, that other hittable
+/// but rotated / translated. Scaling not supported (yet!)
+/// TODO: implement scaling
 pub struct Instance {
     transform: TransformData,
-    object: Box<dyn Hittable>
+    object: Box<dyn Hit>
 }
 
+/// Simple macros to compute the max and min of multiple things 
+/// (should work for any PartialOrd?)
 macro_rules! max {
     ($x: expr) => ($x);
     ($x: expr, $($z: expr),+) => {{
@@ -30,7 +47,11 @@ macro_rules! min {
     }}
 }
 
-impl Hittable for Instance {
+impl Hit for Instance {
+    /// Implementation of Hit
+    /// first transforms the ray into the coordinate system of the original object,
+    /// then transforms the point and normal from the coordinate system of the original object
+    /// back into world coordinates.
     fn hit(&self, r: Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let transformed_ray = r.inverse_transform(self.transform);
         if let Some(hitrecord) = self.object.hit(transformed_ray, t_min, t_max) {
@@ -50,8 +71,9 @@ impl Hittable for Instance {
             None
         }
     }
+    /// Calculates the bounding box of a transformed object
+    /// By checking all 8 corners of bounding box after they are transformed into world coordinates
     fn bounding_box(&self, t0: f64, t1: f64) -> Option<AABB> {
-        // check all 8 corners of bounding box
         if let Some(aabb) = self.object.bounding_box(t0, t1) {
             let a0 = aabb.minimum;
             let a1 = Vec3(aabb.maximum.x(), aabb.minimum.y(), aabb.minimum.z());
@@ -88,7 +110,8 @@ impl Hittable for Instance {
 }
 
 impl Instance {
-    pub fn new(object: Box<dyn Hittable>, transform: TransformData) -> Instance {
+    /// Create a new Instance from a existing Hittable and a Transform 
+    pub fn new(object: Box<dyn Hit>, transform: TransformData) -> Instance {
         Instance { transform, object }
     }
 }

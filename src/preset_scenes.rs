@@ -3,7 +3,7 @@ use std::sync::Arc;
 use clap::clap_derive::ArgEnum;
 use rand::random;
 
-use crate::{scene::Scene, types::{vec3::Vec3, texture::{CheckerTexture, SolidColor, Texture, NoiseTexture, ImageTexture}, color, materials::Material, transform::TransformData, bvh::BVHNode}, camera::Camera, hittables::{hittable_list::HittableList, sphere::Sphere, moving_sphere::MovingSphere, aarect::{YZ, XZ, XY}, block::Block, instance::Instance, constant_medium::ConstantMedium, hittable::Hittable}, utils::{random_range, degrees_to_radians}, Background, hittable_list};
+use crate::{scene::Scene, types::{vec3::Vec3, texture::{CheckerTexture, SolidColor, Texture, NoiseTexture, ImageTexture}, color, materials::Material, transform::TransformData, bvh::BVHNode}, camera::Camera, hittables::{hittable_list::HittableList, sphere::Sphere, moving_sphere::MovingSphere, aarect::{YZ, XZ, XY}, block::Block, instance::Instance, constant_medium::ConstantMedium, hittable::Hit}, utils::{random_range, degrees_to_radians}, Background, hittable_list};
 use crate::Material::*;
 
 #[derive(Clone, ArgEnum)]
@@ -682,7 +682,7 @@ pub fn cornell_smoke(samples_per_pixel: u32) -> Scene {
 }
 
 pub fn final_scene(samples_per_pixel: u32) -> Scene {
-    let mut boxes1: Vec<Box<dyn Hittable>> = Vec::new();
+    let mut boxes1: Vec<Box<dyn Hit>> = Vec::new();
     let ground = Lambertian { 
         albedo: Arc::new(SolidColor::from(Vec3(0.48, 0.83, 0.53)))
     };
@@ -793,7 +793,7 @@ pub fn final_scene(samples_per_pixel: u32) -> Scene {
         }
     }));
 
-    let mut boxes2: Vec<Box<dyn Hittable>> = Vec::new();
+    let mut boxes2: Vec<Box<dyn Hit>> = Vec::new();
     let white = Lambertian { 
         albedo: Arc::new(SolidColor::from(Vec3(0.73, 0.73, 0.73)))
     };
