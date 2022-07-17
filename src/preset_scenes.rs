@@ -190,10 +190,10 @@ fn diagonal_view(samples_per_pixel: u32, world: HittableList) -> Scene {
 
 fn straight_view(samples_per_pixel: u32, world: HittableList) -> Scene {
     pub const ASPECT_RATIO: f64 = 16.0 / 9.0;
-    const IMAGE_WIDTH: u32 = 400;
+    const IMAGE_WIDTH: u32 = 1080;
     const IMAGE_HEIGHT: u32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u32;
     
-    let look_from = Vec3(0.0, 0.0, 10.0);
+    let look_from = Vec3(0.0, 0.0, 6.0);
     let look_at = Vec3(0.0, 0.0, 0.0);
     let focus_dist = 10.0;
     let camera = Camera::custom(
@@ -215,7 +215,7 @@ fn straight_view(samples_per_pixel: u32, world: HittableList) -> Scene {
         height: IMAGE_HEIGHT, 
         width: IMAGE_WIDTH, 
         samples_per_pixel,
-        background: Background::VerticalGradient { bottom: Vec3(0.5, 0.7, 1.0), top: Vec3(1.0, 1.0, 1.0) } 
+        background: Background::VerticalGradient { bottom: Vec3(0.3, 0.42, 0.6), top: Vec3(0.7, 0.7, 0.7) } 
     }
 }
 
@@ -895,7 +895,7 @@ pub fn triangle_test(samples_per_pixel: u32) -> Scene {
 }
 
 pub fn mesh_test(samples_per_pixel: u32) -> Scene {
-    let mesh = Mesh::from_file(Path::new("meshes/flat.obj"));
+    let mesh = Mesh::from_file(Path::new("meshes/suzanne.obj"));
     let mesh = mesh.expect("unable to load mesh");
 
     let world = hittable_list!(Box::new(mesh));
