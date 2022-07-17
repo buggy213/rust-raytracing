@@ -6,3 +6,4 @@ pub mod aabb;
 pub mod bvh;
 pub mod texture;
 pub mod transform;
+pub mod vec2;

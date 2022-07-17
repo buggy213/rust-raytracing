@@ -16,6 +16,8 @@ use super::{
     texture::Texture
 };
 
+// TODO: implement a "mix shader"
+// similar to this: https://docs.blender.org/manual/en/2.79/render/cycles/nodes/types/shaders/mix.html
 #[derive(Clone)]
 pub enum Material {
     Lambertian {

@@ -1,4 +1,9 @@
-use std::{ops::{self, MulAssign}};
+use std::{
+    ops::{
+        self, 
+        MulAssign
+    }
+};
 
 use rand::random;
 
