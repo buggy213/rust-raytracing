@@ -1,9 +1,9 @@
-use std::sync::Arc;
+use std::{sync::Arc, path::Path};
 
 use clap::clap_derive::ArgEnum;
 use rand::random;
 
-use crate::{scene::Scene, types::{vec3::Vec3, texture::{CheckerTexture, SolidColor, Texture, NoiseTexture, ImageTexture}, color, materials::Material, transform::TransformData, bvh::BVHNode}, camera::Camera, hittables::{hittable_list::HittableList, sphere::Sphere, moving_sphere::MovingSphere, aarect::{YZ, XZ, XY}, block::Block, instance::Instance, constant_medium::ConstantMedium, hittable::Hit, tri::Triangle}, utils::{random_range, degrees_to_radians}, Background, hittable_list};
+use crate::{scene::Scene, types::{vec3::Vec3, texture::{CheckerTexture, SolidColor, Texture, NoiseTexture, ImageTexture}, color, materials::Material, transform::TransformData, bvh::BVHNode}, camera::Camera, hittables::{hittable_list::HittableList, sphere::Sphere, moving_sphere::MovingSphere, aarect::{YZ, XZ, XY}, block::Block, instance::Instance, constant_medium::ConstantMedium, hittable::Hit, tri::Triangle, mesh::Mesh}, utils::{random_range, degrees_to_radians}, Background, hittable_list};
 use crate::Material::*;
 
 #[derive(Clone, ArgEnum)]
@@ -17,7 +17,8 @@ pub enum PresetScene {
     TransformTest,
     CornellSmoke,
     FinalRender,
-    TriangleTest
+    TriangleTest,
+    MeshTest,
 }
 
 impl PresetScene {
@@ -32,7 +33,8 @@ impl PresetScene {
             PresetScene::TransformTest => transform_test(samples_per_pixel),
             PresetScene::CornellSmoke => cornell_smoke(samples_per_pixel),
             PresetScene::FinalRender => final_scene(samples_per_pixel),
-            PresetScene::TriangleTest => triangle_test(samples_per_pixel)
+            PresetScene::TriangleTest => triangle_test(samples_per_pixel),
+            PresetScene::MeshTest => mesh_test(samples_per_pixel)
         }
     }
 }
@@ -191,7 +193,7 @@ fn straight_view(samples_per_pixel: u32, world: HittableList) -> Scene {
     const IMAGE_WIDTH: u32 = 400;
     const IMAGE_HEIGHT: u32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u32;
     
-    let look_from = Vec3(0.0, 0.0, 30.0);
+    let look_from = Vec3(0.0, 0.0, 10.0);
     let look_at = Vec3(0.0, 0.0, 0.0);
     let focus_dist = 10.0;
     let camera = Camera::custom(
@@ -882,8 +884,8 @@ pub fn triangle_test(samples_per_pixel: u32) -> Scene {
 
     let triangle = Triangle::new(
         Vec3(0.0, 0.0, 0.0),
-        Vec3(5.0, 0.0, 0.0),
-        Vec3(0.0, 5.0, 0.0),
+        Vec3(1.0, 0.0, 0.0),
+        Vec3(0.0, 1.0, 0.0),
         tri_mat
     );
 
@@ -892,3 +894,11 @@ pub fn triangle_test(samples_per_pixel: u32) -> Scene {
     straight_view(samples_per_pixel, world)
 }
 
+pub fn mesh_test(samples_per_pixel: u32) -> Scene {
+    let mesh = Mesh::from_file(Path::new("meshes/flat.obj"));
+    let mesh = mesh.expect("unable to load mesh");
+
+    let world = hittable_list!(Box::new(mesh));
+
+    straight_view(samples_per_pixel, world)
+}

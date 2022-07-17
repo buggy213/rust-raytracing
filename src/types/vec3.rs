@@ -9,7 +9,7 @@ use rand::random;
 
 use crate::utils::{random_range};
 
-#[derive(Clone, Copy, Default, Debug)]
+#[derive(Clone, Copy, Default, Debug, PartialEq, PartialOrd)]
 pub struct Vec3(pub f64, pub f64, pub f64);
 pub type Point = Vec3;
 

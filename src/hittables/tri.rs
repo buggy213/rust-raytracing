@@ -28,14 +28,14 @@ impl Triangle {
     pub fn new(v0: Vec3, v1: Vec3, v2: Vec3, material: Material) -> Triangle {
         Triangle { v0, v1, v2, material }
     }
-}
 
-impl Hit for Triangle {
-    #[allow(non_snake_case)]
     /// Implementation of Moller-Trumbore ray-triangle intersection algorithm
-    fn hit(&self, r: Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let e1 = self.v1 - self.v0;
-        let e2 = self.v2 - self.v0;
+    /// Returns: (t, u, v) - t where ray intersects triangle, u / v canonical barycentric coordinates
+    /// or None if ray does not intersect triangle 
+    pub fn moller_trumbore(v0: Vec3, v1: Vec3, v2: Vec3, r: Ray, t_min: f64, t_max: f64)
+        -> Option<(f64, f64, f64)> {
+        let e1 = v1 - v0;
+        let e2 = v2 - v0;
         
         let P = Vec3::cross(r.direction, e2);
         let denom = Vec3::dot(P, e1);
@@ -44,7 +44,7 @@ impl Hit for Triangle {
             return None;
         }
 
-        let T = r.origin - self.v0;
+        let T = r.origin - v0;
 
         let u = Vec3::dot(P, T) / denom;
         if u < 0.0 || u > 1.0 {
@@ -59,8 +59,23 @@ impl Hit for Triangle {
 
         let t = Vec3::dot(Q, e2) / denom;
         if t < t_min || t > t_max {
-            return None;
+            None
         }
+        else {
+            Some((t, u, v))
+        }
+    }
+}
+
+impl Hit for Triangle {
+    
+
+    #[allow(non_snake_case)]
+    fn hit(&self, r: Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+        
+        let (t, u, v) = Triangle::moller_trumbore(self.v0, self.v1, self.v2, r, t_min, t_max)?;
+        let e1 = self.v1 - self.v0;
+        let e2 = self.v2 - self.v0;
 
         let normal = Vec3::normalized(Vec3::cross(e1, e2));
 

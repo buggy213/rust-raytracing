@@ -19,7 +19,7 @@
                     "kind": "bin"
                 }
             },
-            "args": ["-s", "32", "-o", "output.png", "--scene", "triangle-test"],
+            "args": ["-s", "32", "-o", "output.png", "--scene", "mesh-test"],
             "cwd": "${workspaceFolder}"
         },
         {
