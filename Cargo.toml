@@ -13,3 +13,6 @@ num_cpus = "1.13.1"
 itertools = "0.10.2"
 image = "0.24.2"
 obj = "0.10.2"
+
+[features]
+ray_debug = []

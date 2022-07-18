@@ -25,6 +25,7 @@ pub trait Hit: Send + Sync {
 /// so this should be a non-issue
 /// 
 /// `u`, `v` - the uv coordinates of the hit. Used for texture mapping
+#[derive(Debug)]
 pub struct HitRecord<'a> {
     pub p: Point,
     pub normal: Vec3,
@@ -41,6 +42,16 @@ impl HitRecord<'_> {
     pub fn construct<'a>(p: Point, outward_normal: Vec3, t: f64, ray: Ray, material: &'a Material, u: f64, v: f64) -> HitRecord<'a> {
         let front_face = Vec3::dot(ray.direction, outward_normal) < 0.0;
         let normal = if front_face { outward_normal } else { -outward_normal };
+        
+        HitRecord { p: p, normal: normal, t: t, front_face: front_face, material, u, v }
+    }
+
+    /// Construct a hitrecord from a normal that was interpolated from vertex normals. Solves the problem of certain rays 
+    /// being rendered as if they were hitting the back side of an object due to vertex normal interpolation even though the underlying
+    /// geometry means they were hitting the front - provide "correct" face normal instead to do the calculation
+    pub fn construct_from_interpolated_normal<'a>(p: Point, interpolated_normal: Vec3, front_face: bool, 
+            t: f64, ray: Ray, material: &'a Material, u: f64, v: f64) -> HitRecord<'a> {
+        let normal = if front_face { interpolated_normal } else { -interpolated_normal };
         
         HitRecord { p: p, normal: normal, t: t, front_face: front_face, material, u, v }
     }

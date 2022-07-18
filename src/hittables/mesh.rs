@@ -29,7 +29,7 @@ use super::{
 /// smooth. If smooth, need each vertex normal separately so they can be interpolated
 pub enum VertexNormals {
     Flat(Vec3),
-    Smooth([Vec3; 3])
+    Smooth([Vec3; 4])
 }
 
 /// Simple 3D mesh, containing vertex positions, vertex normals,
@@ -150,7 +150,14 @@ impl Mesh {
 
                 let vertex_normals = if n0 == n1 && n1 == n2 {
                     VertexNormals::Flat(n0)
-                } else { VertexNormals::Smooth([n0, n1, n2]) };
+                } 
+                else {
+                    let v0 = vertices[v0.0];
+                    let v1 = vertices[v1.0];
+                    let v2 = vertices[v2.0];
+                    let face_normal = Vec3::normalized(Vec3::cross(v1 - v0, v2 - v0));
+                    VertexNormals::Smooth([n0, n1, n2, face_normal]) 
+                };
 
                 let t0 = uv_coords[v0.1.unwrap()];
                 let t1 = uv_coords[v1.1.unwrap()];
@@ -190,17 +197,30 @@ impl Hit for Mesh {
                 if let Some((t, u, v)) = Triangle::moller_trumbore(v0, v1, v2, r, t_min, t_max) {
                     if t < t_max {
                         t_max = t;
-                        let normal = match tri.vertex_normals {
-                            VertexNormals::Flat(face_normal) => face_normal,
+
+                        let front_face;
+                        let normal;
+                        match tri.vertex_normals {
+                            VertexNormals::Flat(face_normal) => {
+                                front_face = Vec3::dot(face_normal, r.direction) < 0.0;
+                                normal = face_normal;
+                            },
                             VertexNormals::Smooth(vertex_normals) => {
+                                #[cfg(feature="ray_debug")]
+                                {
+                                    println!("{:?}", vertex_normals);
+                                }
                                 let w = 1.0 - u - v;
-                                u * vertex_normals[0] + v * vertex_normals[1] + w * vertex_normals[2]
+                                front_face = Vec3::dot(vertex_normals[3], r.direction) < 0.0;
+                                normal = Vec3::normalized(w * vertex_normals[0] + u * vertex_normals[1] + v * vertex_normals[2]);
                             },
                         };
+
                         closest_so_far = Some(
-                            HitRecord::construct(
+                            HitRecord::construct_from_interpolated_normal(
                                 r.at(t), 
-                                normal, 
+                                normal,
+                                front_face,
                                 t, 
                                 r, 
                                 &self.materials[tri.material_index], 

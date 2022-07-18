@@ -16,7 +16,7 @@ use std::sync::mpsc::{
 
 use std::sync::{
     Arc, 
-    mpsc
+    mpsc, Mutex
 };
 use std::thread::{
     self, 
@@ -68,6 +68,7 @@ impl Background {
     }
 }
 
+
 fn ray_color(r: Ray, world: &dyn Hit, depth: u32, background: &Background) -> Color {
     if depth <= 0 {
         return Vec3(0.0, 0.0, 0.0);
@@ -76,7 +77,11 @@ fn ray_color(r: Ray, world: &dyn Hit, depth: u32, background: &Background) -> Co
     match world.hit(r, 0.001, f64::INFINITY) {
         Some(record) => {
             let emitted = record.material.emitted(record.u, record.v, record.p).unwrap_or_default();
-            
+            #[cfg(feature="ray_debug")]
+            {
+                println!("{:?}", r);
+                println!("{:?}", record);
+            }
             match record.material.scatter(r, &record) {
                 Some((attenuation, scattered)) => {
                     emitted + attenuation * ray_color(scattered, world, depth - 1, background)
@@ -93,7 +98,7 @@ fn ray_color(r: Ray, world: &dyn Hit, depth: u32, background: &Background) -> Co
     }
 }
 
-const MAX_DEPTH: u32 = 50;
+const MAX_DEPTH: u32 = 16;
 fn render(scene: &Scene, identifier: u32) -> Vec<Color> {
     let mut color_data: Vec<Color> = Vec::with_capacity((scene.width * scene.height) as usize);
     
@@ -101,6 +106,10 @@ fn render(scene: &Scene, identifier: u32) -> Vec<Color> {
         eprintln!("[{}] scanlines remaining: {}", identifier, j);
         for i in 0..scene.width {            
             let mut color: Color = Vec3(0.0, 0.0, 0.0);
+            #[cfg(feature="ray_debug")]
+            {
+                println!("{} {}", i, j);
+            }
             for _s in 0..scene.samples_per_pixel {
                 let u = (random::<f64>() + i as f64) / (scene.width - 1) as f64;
                 let v = (random::<f64>() + j as f64) / (scene.height - 1) as f64;
@@ -220,14 +229,12 @@ fn main() {
             }
         };
         let mut jobs = Vec::with_capacity((horizontal_tiles * vertical_tiles) as usize);
-
+        let mut total_scanlines = 0;
         // create render jobs
         for j in (0..vertical_tiles).rev() {
             for i in 0..horizontal_tiles {
                 for _ in 0..jobs_per_tile {
-                    jobs.push(RenderJobMessage {
-                        
-                        
+                    let render_job = RenderJobMessage {
                         top_right: if render_strategy == RenderStrategy::ProgressiveAverage {
                             Pixel {
                                 x: scene.width,
@@ -242,14 +249,17 @@ fn main() {
                         },
                         bottom_left: Pixel { x: i * tile_size, y: j * tile_size },
                         samples_per_pixel
-                    });
+                    };
+
+                    total_scanlines += render_job.top_right.y - render_job.bottom_left.y;
+                    jobs.push(render_job);
                 }
             }
         }
 
         let scene_ref = Arc::new(scene);
         
-        for i in 0..cores {
+        for _ in 0..cores {
             let shared_scene = scene_ref.clone();
             let (result_transmit, result_receive) = mpsc::channel();
             let (job_transmit, job_receive) = mpsc::channel();
@@ -258,7 +268,6 @@ fn main() {
                 sleep(Duration::from_millis(500));
                 while let Ok(job_message) = job_receive.try_recv() {
                     async_render(&shared_scene, job_message, &result_transmit);
-                    eprintln!("[{}] finished job", i);
                 }
 
                 result_transmit.send(RenderResultMessage::Done).expect("failed to send message back to main thread");
@@ -275,8 +284,26 @@ fn main() {
             children[i % children.len()].send_job.send(*job).expect("failed to assign job");
         }
         
-        const POLLING_INTERVAL: u64 = 1; // 100ms polling interval
+        const POLLING_INTERVAL: u64 = 1; // 1ms polling interval
+        const REPORTING_INTERVAL: u64 = 5000;
         let mut completed_threads = 0;
+        let completed_scanlines: Arc<Mutex<i32>> = Arc::new(Mutex::new(0));
+        let completed_scanlines_reporter = completed_scanlines.clone();
+
+        let reporter = thread::spawn(
+            move || {
+                loop {
+                    thread::sleep(Duration::from_millis(REPORTING_INTERVAL));
+                    let completed_scanlines = completed_scanlines_reporter.lock().expect("main thread panic'd, exiting");
+                    let percent_done = 100.0 * (*completed_scanlines) as f64 / total_scanlines as f64;
+                    eprintln!("{:.2}% done", percent_done);
+                    if *completed_scanlines >= total_scanlines as i32 {
+                        return;
+                    }
+                }
+            }
+        );
+
         while completed_threads < children.len() {
             sleep(Duration::from_millis(POLLING_INTERVAL));
             for child in children.iter() {
@@ -286,7 +313,10 @@ fn main() {
                             RenderResultMessage::Result { rendered_pixels } => {
                                 for rendered_pixel in rendered_pixels {
                                     let index = (scene_ref.height - 1 - rendered_pixel.0.y) * scene_ref.width + rendered_pixel.0.x;
-                                    color_data[index as usize] += rendered_pixel.1 / jobs_per_tile as f64;
+                                    color_data[index as usize] += rendered_pixel.1 / jobs_per_tile as f64;   
+                                }
+                                if let Ok(mut completed_jobs) = completed_scanlines.lock() {
+                                    *completed_jobs += 1;
                                 }
                             },
                             RenderResultMessage::Done => {
@@ -307,6 +337,8 @@ fn main() {
             child.send_done.send(()).expect("failed to send done message to child thread");
             child.handle.join().expect("failed to join child thread");
         }
+
+        reporter.join().expect("failed to join reporter thread");
         
         scene = Arc::try_unwrap(scene_ref).expect("unable to move scene out of shared ownership");
     }

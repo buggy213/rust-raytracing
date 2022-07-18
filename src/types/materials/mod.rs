@@ -1,5 +1,5 @@
 use std::{
-    sync::Arc
+    sync::Arc, fmt::Debug
 };
 
 use rand::random;
@@ -35,6 +35,12 @@ pub enum Material {
     },
     Isotropic {
         albedo: Arc<dyn Texture>
+    }
+}
+
+impl Debug for Material {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Material").finish()
     }
 }
 
